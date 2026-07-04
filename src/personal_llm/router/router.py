@@ -43,6 +43,21 @@ class ModelRouter:
     def provider_status(self) -> dict[str, bool]:
         return {provider.name: self._provider_available(provider) for provider in self._chat_providers}
 
+    def describe_image(self, image_path: str, question: str | None = None) -> str:
+        """Vision Q&A is Gemini-only (Ollama has no multimodal path here) - fails with the
+        same clear, actionable error style as complete() rather than a raw exception."""
+        import mimetypes
+        from pathlib import Path
+
+        if not self._provider_available(self._gemini):
+            raise RouterError(
+                "No GEMINI_API_KEY found - image Q&A requires Gemini (Ollama has no vision "
+                "path here). Get a free key at https://aistudio.google.com/apikey and add it to .env."
+            )
+        mime_type = mimetypes.guess_type(image_path)[0] or "image/png"
+        image_bytes = Path(image_path).read_bytes()
+        return self._gemini.describe_image(image_bytes, mime_type, question)
+
     def _provider_available(self, provider: ChatProvider) -> bool:
         if provider.name == "ollama":
             if self._ollama_healthy is None:

@@ -14,6 +14,7 @@ from .vectors import VectorStore
 
 _DEFAULT_CHUNK_SIZE = 800
 _DEFAULT_OVERLAP = 100
+_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tiff", ".gif"}
 
 
 class IngestResult(BaseModel):
@@ -50,6 +51,10 @@ def read_file(path: Path) -> str:
             for page in pdf.pages:
                 parts.append(page.extract_text() or "")
         return "\n".join(parts)
+    if suffix in _IMAGE_EXTENSIONS:
+        from personal_llm.vision.ocr import extract_text_from_image
+
+        return extract_text_from_image(str(path))
     return path.read_text(encoding="utf-8", errors="replace")
 
 

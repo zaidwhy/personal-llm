@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+import tempfile
+from pathlib import Path
+
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
+from personal_llm import __version__
 from personal_llm.agent import Agent, AgentResult
 from personal_llm.config import get_settings
 from personal_llm.engine import build_engine
@@ -16,8 +20,16 @@ from personal_llm.rag.pipeline import Answer, ask as rag_ask
 from personal_llm.review.weekly import ReviewReport, generate_review
 from personal_llm.router.providers import RouterError
 from personal_llm.tools import build_default_registry
+from personal_llm.vision import VisionError
 
-app = FastAPI(title="Personal LLM", version="0.1.0")
+app = FastAPI(title="Personal LLM", version=__version__)
+
+
+async def _save_upload_to_temp(upload: UploadFile) -> str:
+    suffix = Path(upload.filename or "upload").suffix
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(await upload.read())
+        return tmp.name
 
 
 class IngestRequest(BaseModel):
@@ -111,6 +123,61 @@ def review_endpoint(req: ReviewRequest) -> ReviewReport:
 def integrations_sync_endpoint(req: IntegrationsSyncRequest) -> SyncResult:
     engine = build_engine()
     return sync_external_items(engine.store, engine.vectors, engine.router, req.items)
+
+
+@app.post("/voice/transcribe")
+async def voice_transcribe_endpoint(file: UploadFile = File(...)) -> dict:
+    engine = build_engine()
+    tmp_path = await _save_upload_to_temp(file)
+    try:
+        return {"text": engine.stt.transcribe(tmp_path)}
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+
+@app.post("/voice/ask", response_model=Answer)
+async def voice_ask_endpoint(file: UploadFile = File(...), verify: bool = False) -> Answer:
+    engine = build_engine()
+    tmp_path = await _save_upload_to_temp(file)
+    try:
+        question = engine.stt.transcribe(tmp_path)
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+    try:
+        return rag_ask(engine.store, engine.vectors, engine.router, question, verify=verify)
+    except RouterError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
+
+@app.post("/vision/describe")
+async def vision_describe_endpoint(file: UploadFile = File(...), question: str | None = None) -> dict:
+    engine = build_engine()
+    tmp_path = await _save_upload_to_temp(file)
+    try:
+        description = engine.router.describe_image(tmp_path, question)
+    except RouterError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+    return {"description": description}
+
+
+@app.post("/vision/ingest")
+async def vision_ingest_endpoint(file: UploadFile = File(...), doc_id: str | None = None) -> IngestResult:
+    engine = build_engine()
+    tmp_path = await _save_upload_to_temp(file)
+    try:
+        from personal_llm.vision.ocr import extract_text_from_image
+
+        text = extract_text_from_image(tmp_path)
+    except VisionError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+    return ingest_text(
+        engine.store, engine.vectors, engine.router,
+        text=text, doc_id=doc_id or (file.filename or "image"), source=file.filename or "image",
+    )
 
 
 @app.get("/stats")

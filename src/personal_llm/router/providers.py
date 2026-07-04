@@ -93,6 +93,21 @@ class GeminiProvider:
                     time.sleep(4 * (attempt + 1))
         raise RouterError(f"Gemini is unavailable after {_MAX_RETRIES} attempts: {last_err}")
 
+    def describe_image(self, image_bytes: bytes, mime_type: str, question: str | None = None) -> str:
+        from google.genai import errors as genai_errors
+        from google.genai import types
+
+        client = self._get_client()
+        prompt = question or "Describe this image in detail."
+        try:
+            response = client.models.generate_content(
+                model=self._settings.gemini_model,
+                contents=[types.Part.from_bytes(data=image_bytes, mime_type=mime_type), prompt],
+            )
+            return response.text or ""
+        except (genai_errors.ClientError, genai_errors.ServerError) as exc:
+            raise RouterError(f"Gemini vision request failed: {getattr(exc, 'message', exc)}")
+
 
 class OllamaProvider:
     name = "ollama"

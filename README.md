@@ -27,6 +27,11 @@ Full design docs live in [`docs/`](docs/): [PRD](docs/PRD.md), [Technical Design
 - **Ingest real Gmail/Drive content** (v1.0, `ingest-external`) fetched via Claude Code's
   own already-authenticated MCP connectors - `personal_llm` holds no Google credentials
   of its own; see [ADR 0005](docs/DECISIONS/0005-external-integrations-via-mcp-bridge.md).
+- **Voice** (v2): transcribe audio locally (`transcribe`, `ask-voice`) via `faster-whisper`
+  - free, offline, no API key - and optionally speak the answer back (`--speak`, `pyttsx3`).
+- **Vision** (v2): ingest screenshots/photos of notes via local OCR (images just work with
+  `ingest`, same as PDFs), and ask Gemini about an image (`describe-image`). See
+  [ADR 0006](docs/DECISIONS/0006-voice-and-vision-local-first.md).
 - Runs on a **hybrid model router**: local embeddings (free, offline, no API key needed
   for ingest/retrieve) + Gemini free tier or an optional local Ollama model for generation.
 
@@ -59,6 +64,12 @@ py -3.12 -m venv venv
 
 # External content (Gmail/Drive fetched elsewhere, e.g. via Claude Code's MCP - see ADR 0005)
 & "venv\Scripts\python" -m personal_llm.interfaces.cli ingest-external "path\to\items.json"
+
+# Voice (local, offline, free) and vision
+& "venv\Scripts\python" -m personal_llm.interfaces.cli transcribe "recording.wav"
+& "venv\Scripts\python" -m personal_llm.interfaces.cli ask-voice "recording.wav" --speak
+& "venv\Scripts\python" -m personal_llm.interfaces.cli ingest "screenshot.png"          # OCR, needs Tesseract installed
+& "venv\Scripts\python" -m personal_llm.interfaces.cli describe-image "photo.jpg"       # needs GEMINI_API_KEY
 ```
 
 Or the Streamlit chat UI:
@@ -76,7 +87,8 @@ Or the FastAPI service:
 ```powershell
 & "venv\Scripts\python" -m pytest tests/ -q
 ```
-75 tests, fully mocked - no API key or network required. CI runs this on every push.
+88 tests, fully mocked - no API key, network, real model, or real Tesseract binary
+required. CI runs this on every push.
 
 ## Architecture at a glance
 
@@ -87,17 +99,18 @@ Interfaces (CLI / FastAPI / Streamlit)
    RAG pipeline -> Reasoning -> Agent (plan-act-reflect loop) -> Proactive review
         |
    Retrieve <-> Model Router (Gemini | Ollama, verified) <-> Tool layer (permission-gated, audited)
-        |
+        |                                                          |
    Memory: SQLite (episodic/semantic/procedural) + Chroma (vectors) + Knowledge Graph
-        ^
-   External integrations (Gmail/Drive - fetched outside the package, ingested idempotently)
+        ^                                                          |
+   External integrations (Gmail/Drive, ingested idempotently)   Voice (STT/TTS) + Vision (OCR/Gemini)
 ```
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for full diagrams and schemas,
 [ADR 0003](docs/DECISIONS/0003-agent-tool-permissions.md) for the tool permission model,
 [ADR 0004](docs/DECISIONS/0004-router-verification.md) for multi-provider verification,
-and [ADR 0005](docs/DECISIONS/0005-external-integrations-via-mcp-bridge.md) for external
-integrations (including the rule that real synced content must never enter this repo).
+[ADR 0005](docs/DECISIONS/0005-external-integrations-via-mcp-bridge.md) for external
+integrations (including the rule that real synced content must never enter this repo),
+and [ADR 0006](docs/DECISIONS/0006-voice-and-vision-local-first.md) for voice/vision.
 
 ## Roadmap
 
@@ -107,8 +120,8 @@ integrations (including the rule that real synced content must never enter this 
 | v0.2 - Agent + typed tool layer | **Done** |
 | v0.3 - Proactive review, router verification | **Done** |
 | v1.0 - Real integrations (Gmail/Drive), installable package, `doctor` | **Done** |
-| v2 - Voice, vision | Next |
-| v3 - Multi-device sync, SDK/marketplace | Speculative |
+| v2 - Voice (STT/TTS), vision (OCR + Gemini) | **Done** |
+| v3 - Multi-device sync, SDK/marketplace, voice cloning | Speculative |
 
 Full detail in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 

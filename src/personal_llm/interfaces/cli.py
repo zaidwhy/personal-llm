@@ -20,6 +20,7 @@ from personal_llm.rag.pipeline import ask as rag_ask
 from personal_llm.review.weekly import generate_review
 from personal_llm.router.providers import RouterError
 from personal_llm.tools import build_default_registry
+from personal_llm.vision import VisionError
 
 app = typer.Typer(help="Personal LLM - your local-first memory + RAG engine.")
 
@@ -40,7 +41,7 @@ def main(
 
 
 @app.command()
-def ingest(paths: list[str] = typer.Argument(..., help="File(s) to ingest (.txt/.md/.pdf).")) -> None:
+def ingest(paths: list[str] = typer.Argument(..., help="File(s) to ingest (.txt/.md/.pdf/image via OCR).")) -> None:
     """Ingest one or more files into memory."""
     engine = build_engine()
     for raw_path in paths:
@@ -48,7 +49,11 @@ def ingest(paths: list[str] = typer.Argument(..., help="File(s) to ingest (.txt/
             if not path.exists():
                 typer.echo(f"skip (not found): {path}")
                 continue
-            result = ingest_file(engine.store, engine.vectors, engine.router, path)
+            try:
+                result = ingest_file(engine.store, engine.vectors, engine.router, path)
+            except VisionError as exc:
+                typer.echo(f"skip ({path}): {exc}")
+                continue
             typer.echo(f"ingested {path}: {result.chunks_ingested} chunks, {result.kg_triples} KG triples")
 
 
@@ -176,6 +181,48 @@ def ingest_external(
     items = [ExternalItem(**entry) for entry in raw]
     result = sync_external_items(engine.store, engine.vectors, engine.router, items)
     typer.echo(f"ingested {result.ingested}, skipped {result.skipped_existing} already-synced")
+
+
+@app.command()
+def transcribe(audio_path: str) -> None:
+    """Transcribe an audio file to text (local Whisper - offline, no API key)."""
+    engine = build_engine()
+    typer.echo(engine.stt.transcribe(audio_path))
+
+
+@app.command(name="ask-voice")
+def ask_voice(
+    audio_path: str,
+    verify: bool = typer.Option(False, "--verify", help="Cross-check across all available providers."),
+    speak: bool = typer.Option(False, "--speak", help="Also synthesize the answer to a wav file."),
+) -> None:
+    """Transcribe an audio question, then answer it grounded in memory."""
+    engine = build_engine()
+    settings = get_settings()
+    question = engine.stt.transcribe(audio_path)
+    typer.echo(f"heard: {question}\n")
+    try:
+        answer = rag_ask(engine.store, engine.vectors, engine.router, question, verify=verify)
+    except RouterError as exc:
+        typer.echo(f"error: {exc}")
+        raise typer.Exit(code=1)
+    typer.echo(answer.text)
+    if speak:
+        out_path = str(Path(settings.personal_llm_voice_dir) / "answer.wav")
+        engine.tts.synthesize(answer.text, out_path)
+        typer.echo(f"\n(spoken answer saved to {out_path})")
+
+
+@app.command(name="describe-image")
+def describe_image(image_path: str, question: str | None = typer.Argument(None)) -> None:
+    """Ask Gemini about an image (vision Q&A - requires GEMINI_API_KEY; Ollama has no vision path here)."""
+    engine = build_engine()
+    try:
+        description = engine.router.describe_image(image_path, question)
+    except RouterError as exc:
+        typer.echo(f"error: {exc}")
+        raise typer.Exit(code=1)
+    typer.echo(description)
 
 
 @app.command()
