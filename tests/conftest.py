@@ -53,6 +53,9 @@ class FakeRouter:
             return self.verify_result
         return VerifiedCompletion(primary=self.complete(messages, schema=schema))
 
+    def provider_status(self) -> dict[str, bool]:
+        return {"fake": True}
+
 
 @pytest.fixture
 def store(tmp_path):

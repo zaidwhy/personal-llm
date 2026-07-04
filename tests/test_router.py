@@ -150,3 +150,13 @@ def test_verification_raises_when_nothing_available():
 
     with pytest.raises(RouterError):
         router.complete_with_verification([Message(role="user", content="q")])
+
+
+def test_provider_status_reports_each_provider():
+    p1 = _StubProvider("p1", available=True)
+    p2 = _StubProvider("p2", available=False)
+    router = ModelRouter(chat_providers=[p1, p2])
+
+    status = router.provider_status()
+
+    assert status == {"p1": True, "p2": False}

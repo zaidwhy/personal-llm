@@ -7,6 +7,7 @@ from pathlib import Path
 
 import typer
 
+from personal_llm import __version__
 from personal_llm.agent import Agent
 from personal_llm.config import get_settings
 from personal_llm.engine import build_engine
@@ -21,6 +22,21 @@ from personal_llm.router.providers import RouterError
 from personal_llm.tools import build_default_registry
 
 app = typer.Typer(help="Personal LLM - your local-first memory + RAG engine.")
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"personal-llm {__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: bool = typer.Option(
+        False, "--version", callback=_version_callback, is_eager=True, help="Show the version and exit."
+    ),
+) -> None:
+    pass
 
 
 @app.command()
@@ -160,6 +176,32 @@ def ingest_external(
     items = [ExternalItem(**entry) for entry in raw]
     result = sync_external_items(engine.store, engine.vectors, engine.router, items)
     typer.echo(f"ingested {result.ingested}, skipped {result.skipped_existing} already-synced")
+
+
+@app.command()
+def doctor() -> None:
+    """Check environment health - version, data paths, provider status. Run this first."""
+    engine = build_engine()
+    settings = get_settings()
+
+    typer.echo(f"personal-llm {__version__}")
+    typer.echo(f"data dir:   {settings.personal_llm_data_dir}")
+    typer.echo(f"db path:    {settings.personal_llm_db_path}")
+    typer.echo(f"chroma dir: {settings.personal_llm_chroma_dir}")
+    typer.echo()
+
+    status = engine.router.provider_status()
+    for name, available in status.items():
+        typer.echo(f"provider {name}: {'available' if available else 'not configured'}")
+    if not any(status.values()):
+        typer.echo("\n[!] No chat provider available - set GEMINI_API_KEY in .env, or run Ollama locally.")
+
+    typer.echo()
+    stats_report = engine.store.stats()
+    typer.echo(
+        f"memories: {stats_report['memories']} ({stats_report['archived_memories']} archived), "
+        f"chunks: {stats_report['chunks']}, kg_nodes: {stats_report['kg_nodes']}, kg_edges: {stats_report['kg_edges']}"
+    )
 
 
 @app.command()

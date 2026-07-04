@@ -4,9 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "personal-llm"
-version = "0.1.0"
+version = "1.0.0"
 description = "Local-first personal memory + RAG engine - the reusable brain for future projects."
+readme = "README.md"
 requires-python = ">=3.12"
+authors = [{ name = "Zaid Ali Syed" }]
+license = { text = "Proprietary - no license granted for reuse yet" }
+
+[project.scripts]
+personal-llm = "personal_llm.interfaces.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]

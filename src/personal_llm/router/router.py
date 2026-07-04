@@ -40,6 +40,9 @@ class ModelRouter:
     def embed(self, texts: list[str]) -> list[list[float]]:
         return self._embedder.embed(texts)
 
+    def provider_status(self) -> dict[str, bool]:
+        return {provider.name: self._provider_available(provider) for provider in self._chat_providers}
+
     def _provider_available(self, provider: ChatProvider) -> bool:
         if provider.name == "ollama":
             if self._ollama_healthy is None:

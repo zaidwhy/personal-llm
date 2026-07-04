@@ -41,6 +41,10 @@ py -3.12 -m venv venv
 # Copy .env.example to .env and add your free Gemini key (https://aistudio.google.com/apikey)
 # Ingest and retrieve work with NO key at all - only `ask` needs a chat provider.
 
+# `pip install -e .` also installs a `personal-llm` console script - check it first:
+& "venv\Scripts\personal-llm.exe" --version
+& "venv\Scripts\personal-llm.exe" doctor
+
 & "venv\Scripts\python" -m personal_llm.interfaces.cli ingest "data\samples\*.md"
 & "venv\Scripts\python" -m personal_llm.interfaces.cli recall "what is this project?"
 & "venv\Scripts\python" -m personal_llm.interfaces.cli ask "what is this project?"
@@ -72,7 +76,7 @@ Or the FastAPI service:
 ```powershell
 & "venv\Scripts\python" -m pytest tests/ -q
 ```
-71 tests, fully mocked - no API key or network required. CI runs this on every push.
+75 tests, fully mocked - no API key or network required. CI runs this on every push.
 
 ## Architecture at a glance
 
@@ -102,8 +106,9 @@ integrations (including the rule that real synced content must never enter this 
 | v0.1 - Memory + RAG spine | **Done** |
 | v0.2 - Agent + typed tool layer | **Done** |
 | v0.3 - Proactive review, router verification | **Done** |
-| v1.0 - Real integrations (Gmail/Drive) done; daily-usable packaging | In progress |
-| v2/v3 - Voice, vision, sync, SDK | Speculative |
+| v1.0 - Real integrations (Gmail/Drive), installable package, `doctor` | **Done** |
+| v2 - Voice, vision | Next |
+| v3 - Multi-device sync, SDK/marketplace | Speculative |
 
 Full detail in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
