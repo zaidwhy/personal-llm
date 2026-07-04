@@ -12,6 +12,7 @@ from personal_llm.memory.ingest import IngestResult, ingest_text
 from personal_llm.memory.retrieve import RetrievedChunk, semantic_search
 from personal_llm.memory.types import MemoryRecord
 from personal_llm.rag.pipeline import Answer, ask as rag_ask
+from personal_llm.review.weekly import ReviewReport, generate_review
 from personal_llm.router.providers import RouterError
 from personal_llm.tools import build_default_registry
 
@@ -27,6 +28,7 @@ class IngestRequest(BaseModel):
 class AskRequest(BaseModel):
     question: str
     k: int | None = None
+    verify: bool = False
 
 
 class RememberRequest(BaseModel):
@@ -41,6 +43,10 @@ class AgentRunRequest(BaseModel):
     max_steps: int = 6
 
 
+class ReviewRequest(BaseModel):
+    days: int = 7
+
+
 @app.post("/ingest", response_model=IngestResult)
 def ingest_endpoint(req: IngestRequest) -> IngestResult:
     engine = build_engine()
@@ -51,7 +57,7 @@ def ingest_endpoint(req: IngestRequest) -> IngestResult:
 def ask_endpoint(req: AskRequest) -> Answer:
     engine = build_engine()
     try:
-        return rag_ask(engine.store, engine.vectors, engine.router, req.question, k=req.k)
+        return rag_ask(engine.store, engine.vectors, engine.router, req.question, k=req.k, verify=req.verify)
     except RouterError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
 
@@ -83,6 +89,15 @@ def agent_run_endpoint(req: AgentRunRequest) -> AgentResult:
     runner = Agent(engine.router, registry, engine.store, allowed_permissions=allowed, max_steps=req.max_steps)
     try:
         return runner.run(req.goal)
+    except RouterError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
+
+@app.post("/review/run", response_model=ReviewReport)
+def review_endpoint(req: ReviewRequest) -> ReviewReport:
+    engine = build_engine()
+    try:
+        return generate_review(engine.store, engine.router, days=req.days)
     except RouterError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
 

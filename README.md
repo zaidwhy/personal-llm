@@ -20,6 +20,10 @@ Full design docs live in [`docs/`](docs/): [PRD](docs/PRD.md), [Technical Design
   permission-gated tools: `memory_search`, `remember`, `read_file` (sandboxed), and
   `web_fetch` (SSRF-guarded). Nothing runs without explicit permission for its tier, and
   every step is written to the audit log.
+- **Run a proactive review** (v0.3, `review`) that surfaces recent activity and
+  important-but-forgotten items without being asked - and **verify answers**
+  (`ask --verify`) across every available provider, flagging disagreement instead of
+  silently picking one.
 - Runs on a **hybrid model router**: local embeddings (free, offline, no API key needed
   for ingest/retrieve) + Gemini free tier or an optional local Ollama model for generation.
 
@@ -41,6 +45,10 @@ py -3.12 -m venv venv
 # Agent (read-only tools by default; opt in per-run to riskier tiers)
 & "venv\Scripts\python" -m personal_llm.interfaces.cli agent "what is this project?"
 & "venv\Scripts\python" -m personal_llm.interfaces.cli agent "look up X on example.com" --allow-network
+
+# Proactive review + verified answers
+& "venv\Scripts\python" -m personal_llm.interfaces.cli review --days 7
+& "venv\Scripts\python" -m personal_llm.interfaces.cli ask "what is this project?" --verify
 ```
 
 Or the Streamlit chat UI:
@@ -58,7 +66,7 @@ Or the FastAPI service:
 ```powershell
 & "venv\Scripts\python" -m pytest tests/ -q
 ```
-54 tests, fully mocked - no API key or network required. CI runs this on every push.
+66 tests, fully mocked - no API key or network required. CI runs this on every push.
 
 ## Architecture at a glance
 
@@ -66,15 +74,16 @@ Or the FastAPI service:
 Interfaces (CLI / FastAPI / Streamlit)
         |
    Personal LLM Engine
-   RAG pipeline -> Reasoning -> Agent (plan-act-reflect loop)
+   RAG pipeline -> Reasoning -> Agent (plan-act-reflect loop) -> Proactive review
         |
-   Retrieve <-> Model Router (Gemini | Ollama) <-> Tool layer (permission-gated, audited)
+   Retrieve <-> Model Router (Gemini | Ollama, verified) <-> Tool layer (permission-gated, audited)
         |
    Memory: SQLite (episodic/semantic/procedural) + Chroma (vectors) + Knowledge Graph
 ```
 
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for full diagrams and schemas, and
-[ADR 0003](docs/DECISIONS/0003-agent-tool-permissions.md) for the tool permission model.
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for full diagrams and schemas,
+[ADR 0003](docs/DECISIONS/0003-agent-tool-permissions.md) for the tool permission model,
+and [ADR 0004](docs/DECISIONS/0004-router-verification.md) for multi-provider verification.
 
 ## Roadmap
 
@@ -82,8 +91,8 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for full diagrams and schemas
 |---|---|
 | v0.1 - Memory + RAG spine | **Done** |
 | v0.2 - Agent + typed tool layer | **Done** |
-| v0.3 - Proactive reviews, richer router | Next |
-| v1.0 - Real integrations (Gmail/Drive), daily-usable | Planned |
+| v0.3 - Proactive review, router verification | **Done** |
+| v1.0 - Real integrations (Gmail/Drive), daily-usable | Next |
 | v2/v3 - Voice, vision, sync, SDK | Speculative |
 
 Full detail in [`docs/ROADMAP.md`](docs/ROADMAP.md).

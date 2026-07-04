@@ -7,11 +7,11 @@ memories are archived (soft-deleted) only once both stale and unimportant.
 from __future__ import annotations
 
 import hashlib
-from datetime import datetime, timezone
 
 from pydantic import BaseModel
 
 from .store import MemoryStore
+from .time_utils import days_since
 
 _DECAY_MULTIPLIER = 0.9  # importance *= this, per stale memory, each consolidation pass
 _DECAY_AFTER_DAYS = 14.0
@@ -25,16 +25,6 @@ class ConsolidationReport(BaseModel):
     duplicates_flagged: int = 0
 
 
-def _days_since(iso_ts: str) -> float:
-    try:
-        ts = datetime.fromisoformat(iso_ts)
-    except ValueError:
-        return 0.0
-    if ts.tzinfo is None:
-        ts = ts.replace(tzinfo=timezone.utc)
-    return max(0.0, (datetime.now(timezone.utc) - ts).total_seconds() / 86400.0)
-
-
 def _content_hash(content: str) -> str:
     return hashlib.sha256(content.strip().lower().encode("utf-8")).hexdigest()
 
@@ -44,7 +34,7 @@ def decay_and_archive(store: MemoryStore) -> tuple[int, int]:
     archived = 0
     for memory in store.list_memories():
         basis = memory.last_accessed or memory.created_at
-        age_days = _days_since(basis)
+        age_days = days_since(basis)
         if age_days <= _DECAY_AFTER_DAYS:
             continue
         new_importance = max(0.0, memory.importance * _DECAY_MULTIPLIER)

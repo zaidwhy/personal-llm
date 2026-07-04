@@ -14,6 +14,7 @@ from personal_llm.memory.ingest import ingest_file
 from personal_llm.memory.retrieve import semantic_search
 from personal_llm.memory.types import MemoryRecord
 from personal_llm.rag.pipeline import ask as rag_ask
+from personal_llm.review.weekly import generate_review
 from personal_llm.router.providers import RouterError
 from personal_llm.tools import build_default_registry
 
@@ -34,15 +35,22 @@ def ingest(paths: list[str] = typer.Argument(..., help="File(s) to ingest (.txt/
 
 
 @app.command()
-def ask(question: str) -> None:
+def ask(
+    question: str,
+    verify: bool = typer.Option(False, "--verify", help="Cross-check across all available providers."),
+) -> None:
     """Ask a question grounded in ingested memory."""
     engine = build_engine()
     try:
-        answer = rag_ask(engine.store, engine.vectors, engine.router, question)
+        answer = rag_ask(engine.store, engine.vectors, engine.router, question, verify=verify)
     except RouterError as exc:
         typer.echo(f"error: {exc}")
         raise typer.Exit(code=1)
     typer.echo(answer.text)
+    if answer.disagreement:
+        typer.echo("\n[!] Providers disagreed on this answer:")
+        for alt in answer.alternate_texts:
+            typer.echo(f"  - {alt[:150]}")
     if answer.sources:
         typer.echo("\nSources:")
         for src in answer.sources:
@@ -111,6 +119,31 @@ def agent(
     typer.echo(f"\n{result.final_answer}")
     if not result.succeeded:
         raise typer.Exit(code=1)
+
+
+@app.command()
+def review(days: int = typer.Option(7, help="How many days back counts as 'recent'.")) -> None:
+    """Proactive review: recent activity plus important items you haven't revisited."""
+    engine = build_engine()
+    try:
+        report = generate_review(engine.store, engine.router, days=days)
+    except RouterError as exc:
+        typer.echo(f"error: {exc}")
+        raise typer.Exit(code=1)
+
+    typer.echo(f"Review ({report.days}d): {report.recent_count} recent, {report.forgotten_count} forgotten-but-important\n")
+    if report.insights.highlights:
+        typer.echo("Highlights:")
+        for item in report.insights.highlights:
+            typer.echo(f"  - {item}")
+    if report.insights.forgotten_worth_revisiting:
+        typer.echo("\nWorth revisiting:")
+        for item in report.insights.forgotten_worth_revisiting:
+            typer.echo(f"  - {item}")
+    if report.insights.suggested_actions:
+        typer.echo("\nSuggested actions:")
+        for item in report.insights.suggested_actions:
+            typer.echo(f"  - {item}")
 
 
 @app.command()

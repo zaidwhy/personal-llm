@@ -86,3 +86,67 @@ def test_router_embed_uses_injected_embedder():
     result = router.embed(["a", "b"])
 
     assert result == [[1.0, 2.0], [1.0, 2.0]]
+
+
+class _FixedEmbedder:
+    def __init__(self, vectors: dict):
+        self._vectors = vectors
+
+    def embed(self, texts):
+        return [self._vectors[t] for t in texts]
+
+
+def test_verification_agrees_when_texts_are_similar():
+    p1 = _StubProvider("p1", text="paris")
+    p2 = _StubProvider("p2", text="paris is the capital")
+    embedder = _FixedEmbedder({"paris": [1.0, 0.0], "paris is the capital": [0.95, 0.05]})
+    router = ModelRouter(chat_providers=[p1, p2], embedder=embedder)
+
+    result = router.complete_with_verification([Message(role="user", content="capital of france?")])
+
+    assert result.primary.text == "paris"
+    assert result.alternates[0].text == "paris is the capital"
+    assert not result.disagreement
+    assert result.agreement_scores[0] > 0.6
+
+
+def test_verification_flags_disagreement_when_texts_diverge():
+    p1 = _StubProvider("p1", text="yes")
+    p2 = _StubProvider("p2", text="no")
+    embedder = _FixedEmbedder({"yes": [1.0, 0.0], "no": [0.0, 1.0]})
+    router = ModelRouter(chat_providers=[p1, p2], embedder=embedder)
+
+    result = router.complete_with_verification([Message(role="user", content="q")])
+
+    assert result.disagreement
+    assert result.agreement_scores[0] == pytest.approx(0.0)
+
+
+def test_verification_single_provider_has_no_alternates():
+    p1 = _StubProvider("p1", text="only answer")
+    router = ModelRouter(chat_providers=[p1])
+
+    result = router.complete_with_verification([Message(role="user", content="q")])
+
+    assert result.alternates == []
+    assert result.agreement_scores == []
+    assert not result.disagreement
+
+
+def test_verification_skips_unavailable_provider():
+    p1 = _StubProvider("p1", available=False)
+    p2 = _StubProvider("p2", text="only from p2")
+    router = ModelRouter(chat_providers=[p1, p2])
+
+    result = router.complete_with_verification([Message(role="user", content="q")])
+
+    assert result.primary.text == "only from p2"
+    assert result.alternates == []
+
+
+def test_verification_raises_when_nothing_available():
+    p1 = _StubProvider("p1", available=False)
+    router = ModelRouter(chat_providers=[p1])
+
+    with pytest.raises(RouterError):
+        router.complete_with_verification([Message(role="user", content="q")])

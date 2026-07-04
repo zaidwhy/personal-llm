@@ -34,6 +34,8 @@ class Answer(BaseModel):
     text: str
     sources: list[Source] = Field(default_factory=list)
     grounded: bool = True
+    disagreement: bool = False
+    alternate_texts: list[str] = Field(default_factory=list)
 
 
 def _build_context(chunks) -> str:
@@ -49,6 +51,7 @@ def ask(
     router: ModelRouter,
     question: str,
     k: int | None = None,
+    verify: bool = False,
 ) -> Answer:
     settings = get_settings()
     chunks = semantic_search(store, vectors, router, question, k=k)
@@ -63,12 +66,27 @@ def ask(
         Message(role="system", content=_SYSTEM),
         Message(role="user", content=f"<context>\n{context}\n</context>\n\nQuestion: {question}"),
     ]
-    completion: Completion = router.complete(messages)
+
+    disagreement = False
+    alternate_texts: list[str] = []
+    if verify:
+        verified = router.complete_with_verification(messages)
+        completion: Completion = verified.primary
+        disagreement = verified.disagreement
+        alternate_texts = [alt.text for alt in verified.alternates]
+    else:
+        completion = router.complete(messages)
 
     store.add_memory(
         MemoryRecord(kind="episodic", content=f"Asked: {question}", source="chat", importance=0.4)
     )
-    store.log("system", "ask", {"question": question, "grounded": True, "provider": completion.provider})
+    store.log(
+        "system",
+        "ask",
+        {"question": question, "grounded": True, "provider": completion.provider, "verify": verify, "disagreement": disagreement},
+    )
 
     sources = [Source(doc_id=c.doc_id, source=c.source, snippet=c.text[:200]) for c in chunks]
-    return Answer(text=completion.text, sources=sources, grounded=True)
+    return Answer(
+        text=completion.text, sources=sources, grounded=True, disagreement=disagreement, alternate_texts=alternate_texts
+    )

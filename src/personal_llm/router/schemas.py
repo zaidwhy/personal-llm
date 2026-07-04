@@ -17,3 +17,12 @@ class Completion(BaseModel):
     parsed: object | None = Field(default=None, description="Structured output if a schema was requested.")
     provider: str
     model: str
+
+
+class VerifiedCompletion(BaseModel):
+    primary: Completion
+    alternates: list[Completion] = Field(default_factory=list)
+    agreement_scores: list[float] = Field(
+        default_factory=list, description="Cosine similarity of each alternate's text to the primary's."
+    )
+    disagreement: bool = False

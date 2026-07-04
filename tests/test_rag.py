@@ -1,5 +1,6 @@
 from personal_llm.memory.ingest import ingest_text
 from personal_llm.rag.pipeline import NOT_IN_MEMORY, ask
+from personal_llm.router.schemas import Completion, VerifiedCompletion
 
 
 def test_ask_returns_grounded_answer_with_sources(store, vectors, router):
@@ -36,3 +37,28 @@ def test_ask_on_empty_memory_returns_not_in_memory(store, vectors, router):
 
     assert answer.grounded is False
     assert answer.text == NOT_IN_MEMORY
+
+
+def test_ask_verify_false_never_calls_verification(store, vectors, router):
+    ingest_text(store, vectors, router, text="Zaid likes Python.", doc_id="doc-1", source="notes.md", extract_kg=False)
+
+    answer = ask(store, vectors, router, "what does Zaid like?", verify=False)
+
+    assert answer.disagreement is False
+    assert answer.alternate_texts == []
+
+
+def test_ask_verify_true_surfaces_disagreement(store, vectors, router):
+    ingest_text(store, vectors, router, text="Zaid likes Python.", doc_id="doc-1", source="notes.md", extract_kg=False)
+    router.verify_result = VerifiedCompletion(
+        primary=Completion(text="Python", parsed=None, provider="fake-a", model="a"),
+        alternates=[Completion(text="Rust", parsed=None, provider="fake-b", model="b")],
+        agreement_scores=[0.1],
+        disagreement=True,
+    )
+
+    answer = ask(store, vectors, router, "what does Zaid like?", verify=True)
+
+    assert answer.text == "Python"
+    assert answer.disagreement is True
+    assert answer.alternate_texts == ["Rust"]

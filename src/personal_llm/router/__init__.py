@@ -1,4 +1,4 @@
 from .router import ModelRouter
-from .schemas import Completion, Message
+from .schemas import Completion, Message, VerifiedCompletion
 
-__all__ = ["ModelRouter", "Completion", "Message"]
+__all__ = ["ModelRouter", "Completion", "Message", "VerifiedCompletion"]
