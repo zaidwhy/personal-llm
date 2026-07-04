@@ -9,6 +9,10 @@ from scratch.
 Full design docs live in [`docs/`](docs/): [PRD](docs/PRD.md), [Technical Design](docs/TDD.md),
 [Architecture Blueprint](docs/ARCHITECTURE.md), [Roadmap](docs/ROADMAP.md), [Competitor analysis](docs/COMPETITORS.md).
 
+> **One-click run:** the ecosystem launcher one level up (`..\run.cmd`) can test, demo, or
+> launch this project alongside Second Brain in a single command. Double-click it for a menu,
+> or run `..\run.cmd ui` to open the chat UI directly.
+
 ## What it does
 
 - **Ingest** text, markdown, or PDF files into durable memory.
