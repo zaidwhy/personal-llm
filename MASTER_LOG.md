@@ -4,7 +4,7 @@ Append-only. Newest entries at the bottom. Read just the tail for recent context
 
 ## 2026-07-04 - Project created
 
-- Repo scaffolded at `C:\Users\Asus\projects\personal-llm` per the architecture blueprint in `docs/`.
+- Repo scaffolded at `C:\Users\Asus\projects\ai-ecosystem\personal-llm` (relocated here 2026-07-04 from `projects\personal-llm` when the AI-ecosystem monorepo was organized) per the architecture blueprint in `docs/`.
 - Building v0.1 "Memory + RAG spine": model router (Gemini + optional Ollama), SQLite memory store, Chroma vector store, ingest/retrieve/RAG pipeline, minimal knowledge graph, CLI/API/Streamlit interfaces, pytest + CI.
 - Stack: Python 3.12 venv, Pydantic v2, FastAPI, Chroma, sentence-transformers (local embeddings, zero-cost), SQLite for episodic memory + graph.
 

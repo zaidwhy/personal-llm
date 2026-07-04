@@ -38,7 +38,7 @@ Full design docs live in [`docs/`](docs/): [PRD](docs/PRD.md), [Technical Design
 ## Quickstart
 
 ```powershell
-cd C:\Users\Asus\projects\personal-llm
+cd C:\Users\Asus\projects\ai-ecosystem\personal-llm
 py -3.12 -m venv venv
 & "venv\Scripts\python" -m pip install -r requirements.txt
 & "venv\Scripts\python" -m pip install -e .

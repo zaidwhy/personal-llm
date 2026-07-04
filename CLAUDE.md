@@ -7,7 +7,7 @@ Full design docs: `docs/PRD.md`, `docs/TDD.md`, `docs/ARCHITECTURE.md`, `docs/RO
 ## Run (one terminal)
 
 ```powershell
-cd C:\Users\Asus\projects\personal-llm
+cd C:\Users\Asus\projects\ai-ecosystem\personal-llm
 & "venv\Scripts\python" -m personal_llm.interfaces.cli --help
 ```
 
