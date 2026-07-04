@@ -8,7 +8,10 @@ from pydantic import BaseModel, Field
 
 class ToolInvocation(BaseModel):
     name: str
-    args: dict = Field(default_factory=dict)
+    args: str = Field(
+        default="{}",
+        description="JSON-encoded object of arguments, e.g. '{\"query\": \"...\"}' or '{}' for none.",
+    )
 
 
 class AgentStep(BaseModel):

@@ -27,7 +27,7 @@ def test_agent_calls_a_tool_then_answers(store, vectors, router):
     router.script = [
         AgentStep(
             thought="I should search memory.",
-            tool=ToolInvocation(name="memory_search", args={"query": "favorite language"}),
+            tool=ToolInvocation(name="memory_search", args='{"query": "favorite language"}'),
         ),
         AgentStep(thought="Found it.", final_answer="Python"),
     ]
@@ -47,7 +47,7 @@ def test_agent_reports_permission_denial_as_observation(store, vectors, router):
     registry.register(RememberTool(store))
 
     router.script = [
-        AgentStep(thought="try to remember", tool=ToolInvocation(name="remember", args={"fact": "x"})),
+        AgentStep(thought="try to remember", tool=ToolInvocation(name="remember", args='{"fact": "x"}')),
         AgentStep(thought="ok, denied", final_answer="I couldn't save that."),
     ]
     agent = Agent(router, registry, store, allowed_permissions={"read_only"})
@@ -63,7 +63,7 @@ def test_agent_stops_after_max_steps(store, vectors, router):
     registry = ToolRegistry()
     registry.register(MemorySearchTool(store, vectors, router))
     router.script = [
-        AgentStep(thought="loop", tool=ToolInvocation(name="memory_search", args={"query": "x"}))
+        AgentStep(thought="loop", tool=ToolInvocation(name="memory_search", args='{"query": "x"}'))
         for _ in range(10)
     ]
     agent = Agent(router, registry, store, allowed_permissions={"read_only"}, max_steps=3)
@@ -89,6 +89,50 @@ def test_agent_falls_back_to_final_when_output_unparsed(store, vectors):
 
     assert result.succeeded
     assert result.final_answer == "not json"
+
+
+def test_agent_reports_invalid_json_args_as_observation(store, vectors, router):
+    registry = ToolRegistry()
+    registry.register(MemorySearchTool(store, vectors, router))
+
+    router.script = [
+        AgentStep(thought="malformed", tool=ToolInvocation(name="memory_search", args="not valid json")),
+        AgentStep(thought="recovered", final_answer="gave up gracefully"),
+    ]
+    agent = Agent(router, registry, store, allowed_permissions={"read_only"})
+
+    result = agent.run("goal")
+
+    assert result.succeeded
+    assert "ERROR: invalid tool args" in result.steps[0].observation
+
+
+def test_agent_reports_non_object_json_args_as_observation(store, vectors, router):
+    registry = ToolRegistry()
+    registry.register(MemorySearchTool(store, vectors, router))
+
+    router.script = [
+        AgentStep(thought="malformed", tool=ToolInvocation(name="memory_search", args="[1, 2, 3]")),
+        AgentStep(thought="recovered", final_answer="gave up gracefully"),
+    ]
+    agent = Agent(router, registry, store, allowed_permissions={"read_only"})
+
+    result = agent.run("goal")
+
+    assert result.succeeded
+    assert "must be a JSON object" in result.steps[0].observation
+
+
+def test_agent_default_args_is_empty_object():
+    step = AgentStep(thought="no args needed", tool=ToolInvocation(name="stats"))
+    assert step.tool.args == "{}"
+
+
+def test_agent_step_schema_has_no_additional_properties():
+    import json
+
+    schema_str = json.dumps(AgentStep.model_json_schema())
+    assert "additionalProperties" not in schema_str
 
 
 def test_agent_logs_to_audit(store, vectors, router):
