@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from personal_llm.agent import Agent, AgentResult
 from personal_llm.config import get_settings
 from personal_llm.engine import build_engine
+from personal_llm.integrations import ExternalItem, SyncResult, sync_external_items
 from personal_llm.memory.ingest import IngestResult, ingest_text
 from personal_llm.memory.retrieve import RetrievedChunk, semantic_search
 from personal_llm.memory.types import MemoryRecord
@@ -45,6 +46,10 @@ class AgentRunRequest(BaseModel):
 
 class ReviewRequest(BaseModel):
     days: int = 7
+
+
+class IntegrationsSyncRequest(BaseModel):
+    items: list[ExternalItem]
 
 
 @app.post("/ingest", response_model=IngestResult)
@@ -100,6 +105,12 @@ def review_endpoint(req: ReviewRequest) -> ReviewReport:
         return generate_review(engine.store, engine.router, days=req.days)
     except RouterError as exc:
         raise HTTPException(status_code=503, detail=str(exc))
+
+
+@app.post("/integrations/sync", response_model=SyncResult)
+def integrations_sync_endpoint(req: IntegrationsSyncRequest) -> SyncResult:
+    engine = build_engine()
+    return sync_external_items(engine.store, engine.vectors, engine.router, req.items)
 
 
 @app.get("/stats")

@@ -2,9 +2,7 @@ venv/
 __pycache__/
 *.pyc
 .env
-data/*.db
-data/chroma/
-data/samples/*.tmp
+data/
 .pytest_cache/
 *.egg-info/
 handoffs/

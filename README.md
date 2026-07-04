@@ -24,6 +24,9 @@ Full design docs live in [`docs/`](docs/): [PRD](docs/PRD.md), [Technical Design
   important-but-forgotten items without being asked - and **verify answers**
   (`ask --verify`) across every available provider, flagging disagreement instead of
   silently picking one.
+- **Ingest real Gmail/Drive content** (v1.0, `ingest-external`) fetched via Claude Code's
+  own already-authenticated MCP connectors - `personal_llm` holds no Google credentials
+  of its own; see [ADR 0005](docs/DECISIONS/0005-external-integrations-via-mcp-bridge.md).
 - Runs on a **hybrid model router**: local embeddings (free, offline, no API key needed
   for ingest/retrieve) + Gemini free tier or an optional local Ollama model for generation.
 
@@ -49,6 +52,9 @@ py -3.12 -m venv venv
 # Proactive review + verified answers
 & "venv\Scripts\python" -m personal_llm.interfaces.cli review --days 7
 & "venv\Scripts\python" -m personal_llm.interfaces.cli ask "what is this project?" --verify
+
+# External content (Gmail/Drive fetched elsewhere, e.g. via Claude Code's MCP - see ADR 0005)
+& "venv\Scripts\python" -m personal_llm.interfaces.cli ingest-external "path\to\items.json"
 ```
 
 Or the Streamlit chat UI:
@@ -66,7 +72,7 @@ Or the FastAPI service:
 ```powershell
 & "venv\Scripts\python" -m pytest tests/ -q
 ```
-66 tests, fully mocked - no API key or network required. CI runs this on every push.
+71 tests, fully mocked - no API key or network required. CI runs this on every push.
 
 ## Architecture at a glance
 
@@ -79,11 +85,15 @@ Interfaces (CLI / FastAPI / Streamlit)
    Retrieve <-> Model Router (Gemini | Ollama, verified) <-> Tool layer (permission-gated, audited)
         |
    Memory: SQLite (episodic/semantic/procedural) + Chroma (vectors) + Knowledge Graph
+        ^
+   External integrations (Gmail/Drive - fetched outside the package, ingested idempotently)
 ```
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for full diagrams and schemas,
 [ADR 0003](docs/DECISIONS/0003-agent-tool-permissions.md) for the tool permission model,
-and [ADR 0004](docs/DECISIONS/0004-router-verification.md) for multi-provider verification.
+[ADR 0004](docs/DECISIONS/0004-router-verification.md) for multi-provider verification,
+and [ADR 0005](docs/DECISIONS/0005-external-integrations-via-mcp-bridge.md) for external
+integrations (including the rule that real synced content must never enter this repo).
 
 ## Roadmap
 
@@ -92,7 +102,7 @@ and [ADR 0004](docs/DECISIONS/0004-router-verification.md) for multi-provider ve
 | v0.1 - Memory + RAG spine | **Done** |
 | v0.2 - Agent + typed tool layer | **Done** |
 | v0.3 - Proactive review, router verification | **Done** |
-| v1.0 - Real integrations (Gmail/Drive), daily-usable | Next |
+| v1.0 - Real integrations (Gmail/Drive) done; daily-usable packaging | In progress |
 | v2/v3 - Voice, vision, sync, SDK | Speculative |
 
 Full detail in [`docs/ROADMAP.md`](docs/ROADMAP.md).

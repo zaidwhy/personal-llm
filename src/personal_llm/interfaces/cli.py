@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import typer
@@ -9,6 +10,7 @@ import typer
 from personal_llm.agent import Agent
 from personal_llm.config import get_settings
 from personal_llm.engine import build_engine
+from personal_llm.integrations import ExternalItem, sync_external_items
 from personal_llm.memory.consolidate import consolidate as run_consolidate
 from personal_llm.memory.ingest import ingest_file
 from personal_llm.memory.retrieve import semantic_search
@@ -144,6 +146,20 @@ def review(days: int = typer.Option(7, help="How many days back counts as 'recen
         typer.echo("\nSuggested actions:")
         for item in report.insights.suggested_actions:
             typer.echo(f"  - {item}")
+
+
+@app.command(name="ingest-external")
+def ingest_external(
+    path: str = typer.Argument(..., help="JSON file: a list of {source, external_id, title, content, url?} items."),
+) -> None:
+    """Ingest pre-fetched external items (e.g. Gmail/Drive content fetched via Claude Code's
+    own MCP connectors - see docs/DECISIONS/0005). This command never fetches anything itself
+    and has no credentials; point it at a JSON file someone/something else produced."""
+    engine = build_engine()
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    items = [ExternalItem(**entry) for entry in raw]
+    result = sync_external_items(engine.store, engine.vectors, engine.router, items)
+    typer.echo(f"ingested {result.ingested}, skipped {result.skipped_existing} already-synced")
 
 
 @app.command()

@@ -174,6 +174,11 @@ class MemoryStore:
             )
         return chunk.id
 
+    def doc_exists(self, doc_id: str) -> bool:
+        with self._connect() as conn:
+            row = conn.execute("SELECT 1 FROM chunks WHERE doc_id = ? LIMIT 1", (doc_id,)).fetchone()
+        return row is not None
+
     def get_chunks(self, chunk_ids: list[str]) -> list[Chunk]:
         if not chunk_ids:
             return []
