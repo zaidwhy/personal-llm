@@ -21,15 +21,19 @@ class Settings(BaseSettings):
     personal_llm_data_dir: str = "./data"
     personal_llm_db_path: str = "./data/personal_llm.db"
     personal_llm_chroma_dir: str = "./data/chroma"
+    personal_llm_workspace_dir: str = "./data/workspace"
 
     retrieval_top_k: int = 8
     retrieval_min_similarity: float = 0.25
     memory_recency_half_life_days: float = 30.0
 
+    agent_max_steps: int = 6
+
     def ensure_data_dirs(self) -> None:
         Path(self.personal_llm_data_dir).mkdir(parents=True, exist_ok=True)
         Path(self.personal_llm_chroma_dir).mkdir(parents=True, exist_ok=True)
         Path(self.personal_llm_db_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(self.personal_llm_workspace_dir).mkdir(parents=True, exist_ok=True)
 
 
 _settings: Settings | None = None

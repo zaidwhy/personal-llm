@@ -222,6 +222,21 @@ class MemoryStore:
                 (_now(), actor, action, json.dumps(detail or {})),
             )
 
+    def recent_audit(self, actor: str | None = None, limit: int = 50) -> list[dict]:
+        query = "SELECT ts, actor, action, detail FROM audit"
+        params: list = []
+        if actor is not None:
+            query += " WHERE actor = ?"
+            params.append(actor)
+        query += " ORDER BY id DESC LIMIT ?"
+        params.append(limit)
+        with self._connect() as conn:
+            rows = conn.execute(query, params).fetchall()
+        return [
+            {"ts": r["ts"], "actor": r["actor"], "action": r["action"], "detail": json.loads(r["detail"] or "{}")}
+            for r in rows
+        ]
+
     # --- stats ----------------------------------------------------------------
 
     def stats(self) -> dict:

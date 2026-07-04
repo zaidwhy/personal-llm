@@ -2,8 +2,8 @@
 
 | Phase | Scope | Key deliverables | Success metric |
 |---|---|---|---|
-| **v0.1 Spine** (building now) | Memory + RAG + KG-lite + CLI/API/Streamlit + tests/CI | Model router, SQLite memory store, Chroma ingest/retrieve, grounded RAG with citations, minimal KG, 3 interfaces | Ingest real notes; ask questions; get cited answers; offline-capable for ingest/retrieve |
-| **v0.2 Agent + Tools** | Base `Agent` loop, typed tool layer, 2-3 safe tools, permission + audit | `Agent` class, `ToolLayer`, file/memory/web-search tools, audit log | Agent completes a multi-step task using tools, fully logged |
+| **v0.1 Spine** (done) | Memory + RAG + KG-lite + CLI/API/Streamlit + tests/CI | Model router, SQLite memory store, Chroma ingest/retrieve, grounded RAG with citations, minimal KG, 3 interfaces | Ingest real notes; ask questions; get cited answers; offline-capable for ingest/retrieve |
+| **v0.2 Agent + Tools** (done) | Base `Agent` loop, typed tool layer, 4 safe tools across all 3 permission tiers, permission + audit | `Agent` class (plan-act-reflect, structured JSON steps), `ToolRegistry`, `memory_search`/`remember`/`read_file`/`web_fetch` tools, audit log via `store.log`/`store.recent_audit` | Agent completes a multi-step task using tools, fully logged; every tool call permission-gated; unauthorized/invalid calls fail as an observation, not a crash |
 | **v0.3 Proactive + Router+** | Scheduled reviews, richer router (paid models, verification) | Weekly-review job, multi-provider disagreement detection | AI surfaces something useful unprompted |
 | **v1.0 Personal assistant** | 1-2 real integrations (Gmail/Drive via existing MCP), packaging, polish | Real inbox/drive-aware answers, installable package | Daily-usable by Zaid for 2+ consecutive weeks |
 | **v2 (speculative)** | Voice (STT/TTS), vision (screens/docs), conflict-resolution UI | Research spikes before commitment | Revisit only once v1 is genuinely used |

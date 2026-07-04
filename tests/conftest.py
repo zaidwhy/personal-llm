@@ -25,9 +25,10 @@ def hash_embed(text: str) -> list[float]:
 
 
 class FakeRouter:
-    def __init__(self, canned_text: str = "mock answer", canned_parsed=None):
+    def __init__(self, canned_text: str = "mock answer", canned_parsed=None, script: list | None = None):
         self.canned_text = canned_text
         self.canned_parsed = canned_parsed
+        self.script = list(script) if script is not None else None
         self.calls: list = []
 
     def embed(self, texts: list[str]) -> list[list[float]]:
@@ -35,6 +36,9 @@ class FakeRouter:
 
     def complete(self, messages, schema=None) -> Completion:
         self.calls.append((messages, schema))
+        if self.script:
+            parsed = self.script.pop(0)
+            return Completion(text=parsed.model_dump_json(), parsed=parsed, provider="fake", model="fake-model")
         return Completion(text=self.canned_text, parsed=self.canned_parsed, provider="fake", model="fake-model")
 
 
