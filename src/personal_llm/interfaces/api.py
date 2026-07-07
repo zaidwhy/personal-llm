@@ -125,12 +125,41 @@ def integrations_sync_endpoint(req: IntegrationsSyncRequest) -> SyncResult:
     return sync_external_items(engine.store, engine.vectors, engine.router, req.items)
 
 
+def _transcribe_or_400(engine, tmp_path: str) -> str:
+    """Undecodable or silent audio must be a clear 400, never a crashed request.
+
+    The av.open pre-check matters: feeding non-audio bytes straight into whisper can
+    hard-crash the worker process (not a catchable exception), so validate first.
+    """
+    try:
+        import av
+
+        with av.open(tmp_path) as container:
+            if not container.streams.audio:
+                raise ValueError("no audio stream")
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="That did not decode as audio - record a bit longer and try again.",
+        )
+    try:
+        text = engine.stt.transcribe(tmp_path)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Could not decode the audio - record a bit longer and try again. ({type(exc).__name__})",
+        )
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="I heard nothing - hold to talk, speak, then release.")
+    return text
+
+
 @app.post("/voice/transcribe")
 async def voice_transcribe_endpoint(file: UploadFile = File(...)) -> dict:
     engine = build_engine()
     tmp_path = await _save_upload_to_temp(file)
     try:
-        return {"text": engine.stt.transcribe(tmp_path)}
+        return {"text": _transcribe_or_400(engine, tmp_path)}
     finally:
         Path(tmp_path).unlink(missing_ok=True)
 
@@ -140,7 +169,7 @@ async def voice_ask_endpoint(file: UploadFile = File(...), verify: bool = False)
     engine = build_engine()
     tmp_path = await _save_upload_to_temp(file)
     try:
-        question = engine.stt.transcribe(tmp_path)
+        question = _transcribe_or_400(engine, tmp_path)
     finally:
         Path(tmp_path).unlink(missing_ok=True)
     try:
