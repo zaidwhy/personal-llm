@@ -6,3 +6,4 @@ data/
 .pytest_cache/
 *.egg-info/
 handoffs/
+graphify-out/
