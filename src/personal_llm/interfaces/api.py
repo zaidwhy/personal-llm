@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import secrets
 import tempfile
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from personal_llm import __version__
@@ -23,6 +25,46 @@ from personal_llm.tools import build_default_registry
 from personal_llm.vision import VisionError
 
 app = FastAPI(title="Personal LLM", version=__version__)
+
+GATEWAY_TOKEN_HEADER = "x-dreamos-token"
+_gateway_token: str | None = None
+
+
+def _load_or_create_gateway_token() -> str:
+    """Shared secret DreamOS (or any other local caller) must send back on every request.
+
+    Generated once and persisted to disk so it survives a gateway restart without the
+    caller needing to re-pair.
+    """
+    global _gateway_token
+    if _gateway_token is not None:
+        return _gateway_token
+    path = Path(get_settings().personal_llm_gateway_token_path)
+    existing = path.read_text().strip() if path.exists() else ""
+    if existing:
+        _gateway_token = existing
+    else:
+        _gateway_token = secrets.token_hex(32)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_gateway_token)
+    return _gateway_token
+
+
+@app.middleware("http")
+async def gateway_auth(request: Request, call_next):
+    """CSRF hardening (MASTER-FIX-PLAN.md S3 / Phase 3 item 12).
+
+    Multipart and form-encoded POSTs are reachable cross-origin without a CORS
+    preflight, so a browser page could otherwise submit them straight to this
+    gateway. Any request carrying an Origin header - which every real browser
+    request does, and no local non-browser caller does - is rejected outright,
+    and every request must also present the shared token.
+    """
+    if "origin" in request.headers:
+        return JSONResponse(status_code=403, content={"detail": "Cross-origin requests are not allowed."})
+    if request.headers.get(GATEWAY_TOKEN_HEADER) != _load_or_create_gateway_token():
+        return JSONResponse(status_code=401, content={"detail": "Missing or invalid X-DreamOS-Token."})
+    return await call_next(request)
 
 
 async def _save_upload_to_temp(upload: UploadFile) -> str:
