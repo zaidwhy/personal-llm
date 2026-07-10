@@ -52,6 +52,19 @@ All LLM calls are mocked in tests - no API key needed. GitHub Actions runs pytes
 - Handoffs: `handoffs/HANDOFF-YYYY-MM-DD-HHMM.md`.
 - Before ending a session: update the master log AND write a handoff (or run `/wrap`).
 
+## Gateway auth (added 2026-07-10)
+
+- The FastAPI gateway requires `X-DreamOS-Token` on EVERY route and rejects any request
+  carrying a browser `Origin` header (CSRF hardening, MASTER-FIX-PLAN item S3).
+- Token file: `data/gateway_token` (settings key `personal_llm_gateway_token_path`) -
+  auto-created on first request (or by DreamOS, whichever runs first). Delete it to
+  rotate. Deliberately OUTSIDE `data/workspace/` so the agent loop's file tools can
+  never read the token.
+- PowerShell check: `Invoke-RestMethod http://127.0.0.1:8321/stats -Headers @{"X-DreamOS-Token"=(Get-Content data\gateway_token)}`.
+- Auth middleware lives at the top of `src/personal_llm/interfaces/api.py`; tests in
+  `tests/test_api.py` (Night Shift PR#1; a duplicate local implementation was dropped
+  during the 2026-07-10 rebase).
+
 ## Other gotchas
 
 - Never use the em dash character (U+2014) anywhere; use " - " instead.

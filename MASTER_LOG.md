@@ -1,4 +1,4 @@
-# Personal LLM - Master Log
+﻿# Personal LLM - Master Log
 
 Append-only. Newest entries at the bottom. Read just the tail for recent context.
 
@@ -77,3 +77,16 @@ Append-only. Newest entries at the bottom. Read just the tail for recent context
 - 4 new regression tests (invalid JSON args, non-object JSON args, default args value, and an explicit `"additionalProperties" not in schema` assertion so this exact class of bug can't silently return), 92/92 total.
 - Re-ran the real `agent` command after the fix: it correctly called `memory_search` with properly-parsed args, got a real observation back, reasoned over it, and gave the correct final answer ("Zaid is building Personal LLM, a local-first memory and reasoning engine designed to be imported by his other AI projects.") - the agent's first fully successful real-Gemini run.
 - Lesson for future work: mocking the router at the `complete()` boundary (as this whole test suite does, by design, for speed and zero-network-in-CI) means real provider-specific schema/API quirks can only be caught by an actual live call - which is exactly why every phase in this project has included a real end-to-end smoke test, not just passing unit tests, before being called done.
+
+## 2026-07-10 - Gateway auth (MASTER-FIX-PLAN S3)
+
+- Every FastAPI route now requires the `X-DreamOS-Token` header; requests carrying a
+  browser `Origin` header get 403 outright (closes the localhost-CSRF hole on the
+  multipart endpoints). Middleware at the top of `src/personal_llm/interfaces/api.py` (Night Shift PR#1; the local session's duplicate implementation was dropped on rebase).
+- Token file `data/gateway_token` (outside the agent workspace on purpose) - auto-created by the middleware or by
+  DreamOS, whichever runs first; delete to rotate.
+- Auth tests in `tests/test_api.py`; suite 100 green.
+- Live-verified: /stats 401 tokenless / 200 with token / 403 with Origin; /voice/ask 400
+  on garbage multipart audio; /ask 200 end-to-end; Streamlit chat renders; DreamOS.exe
+  (rebuilt) authenticates from boot.
+
