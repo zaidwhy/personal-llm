@@ -9,7 +9,7 @@ description = "Local-first personal memory + RAG engine - the reusable brain for
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [{ name = "Zaid Ali Syed" }]
-license = { text = "Proprietary - no license granted for reuse yet" }
+license = { text = "MIT" }
 
 [project.scripts]
 personal-llm = "personal_llm.interfaces.cli:app"
@@ -19,3 +19,4 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+

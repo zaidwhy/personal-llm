@@ -1,17 +1,21 @@
 # Personal LLM
 
+[![CI](https://github.com/syzayd/personal-llm/actions/workflows/ci.yml/badge.svg)](https://github.com/syzayd/personal-llm/actions/workflows/ci.yml)
+![Tests](https://img.shields.io/badge/tests-100%20passed%20offline-brightgreen)
+![Python](https://img.shields.io/badge/python-3.12-blue)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 **Your Second Brain. Your Digital Twin. Your Personal AI.**
 
 A local-first, privacy-preserving personal memory + RAG engine - built once so future
 AI projects can import it instead of rebuilding memory, retrieval, and model routing
-from scratch.
+from scratch. It is the shared kernel behind three downstream apps:
+[second-brain](https://github.com/syzayd/second-brain),
+[github-pr-agent](https://github.com/syzayd/github-pr-agent), and DreamOS (an Electron
+AI command bar, private until its demo video ships).
 
 Full design docs live in [`docs/`](docs/): [PRD](docs/PRD.md), [Technical Design](docs/TDD.md),
 [Architecture Blueprint](docs/ARCHITECTURE.md), [Roadmap](docs/ROADMAP.md), [Competitor analysis](docs/COMPETITORS.md).
-
-> **One-click run:** the ecosystem launcher one level up (`..\run.cmd`) can test, demo, or
-> launch this project alongside Second Brain in a single command. Double-click it for a menu,
-> or run `..\run.cmd ui` to open the chat UI directly.
 
 ## What it does
 
@@ -39,10 +43,11 @@ Full design docs live in [`docs/`](docs/): [PRD](docs/PRD.md), [Technical Design
 - Runs on a **hybrid model router**: local embeddings (free, offline, no API key needed
   for ingest/retrieve) + Gemini free tier or an optional local Ollama model for generation.
 
-## Quickstart
+## Quickstart (under 5 minutes)
 
 ```powershell
-cd C:\Users\Asus\projects\ai-ecosystem\personal-llm
+git clone https://github.com/syzayd/personal-llm
+cd personal-llm
 py -3.12 -m venv venv
 & "venv\Scripts\python" -m pip install -r requirements.txt
 & "venv\Scripts\python" -m pip install -e .
@@ -85,14 +90,25 @@ Or the FastAPI service:
 ```powershell
 & "venv\Scripts\python" -m uvicorn personal_llm.interfaces.api:app --reload
 ```
+The HTTP gateway is CSRF-hardened: every request needs the `X-DreamOS-Token` header
+(value auto-created at `data/gateway_token` on first request), and anything carrying a
+browser `Origin` header is rejected outright. The CLI and Streamlit UI use the engine
+in-process and need no token.
+
+## Demo
+
+<!-- TODO(zaid): record a real 30-second GIF - ingest a note, ask a question, show the
+cited answer + the honest refusal on a question memory can't answer. Never fabricate. -->
+Demo GIF coming soon. Until then, the Quickstart above reproduces the full flow in
+under 5 minutes with no API key.
 
 ## Tests
 
 ```powershell
 & "venv\Scripts\python" -m pytest tests/ -q
 ```
-88 tests, fully mocked - no API key, network, real model, or real Tesseract binary
-required. CI runs this on every push.
+100 tests, fully mocked - no API key, network, real model, or real Tesseract binary
+required. CI runs this on every push (keyless by design).
 
 ## Architecture at a glance
 
@@ -129,6 +145,11 @@ and [ADR 0006](docs/DECISIONS/0006-voice-and-vision-local-first.md) for voice/vi
 
 Full detail in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). The one hard rule: the test suite stays fully
+offline and keyless.
+
 ## License
 
-Personal project - no license granted for reuse yet.
+[MIT](LICENSE).
