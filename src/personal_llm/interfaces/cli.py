@@ -11,6 +11,8 @@ from personal_llm import __version__
 from personal_llm.agent import Agent
 from personal_llm.config import get_settings
 from personal_llm.engine import build_engine
+from personal_llm.eval import run_eval
+from personal_llm.eval.cases import builtin_cases
 from personal_llm.integrations import ExternalItem, sync_external_items
 from personal_llm.memory.consolidate import consolidate as run_consolidate
 from personal_llm.memory.ingest import ingest_file
@@ -167,6 +169,25 @@ def review(days: int = typer.Option(7, help="How many days back counts as 'recen
         typer.echo("\nSuggested actions:")
         for item in report.insights.suggested_actions:
             typer.echo(f"  - {item}")
+
+
+@app.command()
+def eval() -> None:
+    """Run the prompt-regression eval suite (offline, no engine/API key needed) and
+    report pass/fail per case; exits non-zero if any case failed."""
+    report = run_eval(builtin_cases())
+    for result in report.results:
+        if result.error is not None:
+            typer.echo(f"[ERROR] {result.name}: {result.error}")
+        elif result.passed:
+            typer.echo(f"[PASS]  {result.name}")
+        else:
+            typer.echo(f"[FAIL]  {result.name}")
+            for failure in result.failures:
+                typer.echo(f"          - {failure}")
+    typer.echo(f"\n{report.summary}")
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 @app.command(name="ingest-external")
