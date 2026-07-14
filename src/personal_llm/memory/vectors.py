@@ -39,3 +39,13 @@ class VectorStore:
 
     def count(self) -> int:
         return self._collection.count()
+
+    def close(self) -> None:
+        """Release the underlying sqlite handle.
+
+        Chroma's PersistentClient keeps chroma.sqlite3 open until this is called (or
+        the client is garbage-collected), which races a TemporaryDirectory's cleanup
+        on Windows (WinError 32: file in use) - callers using a temp persist_dir must
+        call this before the directory context exits.
+        """
+        self._client.close()

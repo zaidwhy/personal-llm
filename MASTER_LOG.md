@@ -90,3 +90,19 @@ Append-only. Newest entries at the bottom. Read just the tail for recent context
   on garbage multipart audio; /ask 200 end-to-end; Streamlit chat renders; DreamOS.exe
   (rebuilt) authenticates from boot.
 
+
+## 2026-07-11 (Night Shift) - prompt-regression eval-harness skeleton
+
+- `src/personal_llm/eval/`: `harness.py` (`EvalCase`/`Assertion`/`run_eval`/`EvalReport` -
+  pure, generic pass/fail runner, a case that raises is isolated as a failure rather than
+  crashing the run) + `cases.py` (3 builtin cases against `rag.pipeline.ask` and
+  `review.weekly.generate_review`, using a small self-contained `_ScriptedRouter` so the
+  cases run identically from pytest or the CLI). New `eval` CLI command runs the suite
+  and exits non-zero on any failure.
+- Purpose: catch behavior regressions when a system prompt (`_SYSTEM` in `rag/pipeline.py`
+  or `review/weekly.py`) is reworded - assertions check output shape/content, never
+  literal prompt wording, so prompts stay free to change.
+- 7 new tests (`tests/test_eval.py`): harness pass/fail/error-isolation logic, the builtin
+  cases currently all passing (today's regression baseline), and the CLI command's
+  exit-code behavior. Full suite 107/107 green offline (chromadb + sentence-transformers
+  installed for this session; no API key or network used).
