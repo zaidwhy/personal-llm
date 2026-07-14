@@ -71,7 +71,9 @@ def _rag_grounded_case() -> EvalCase:
                 text="Zaid is building Personal LLM, a local-first memory engine.",
                 doc_id="doc-1", source="notes.md", extract_kg=False,
             )
-            return ask(store, vectors, router, "What is Zaid building?")
+            result = ask(store, vectors, router, "What is Zaid building?")
+            vectors.close()
+            return result
 
     return EvalCase(
         name="rag_grounded_answer_cites_source",
@@ -90,7 +92,9 @@ def _rag_ungrounded_case() -> EvalCase:
             store = MemoryStore(str(Path(tmp) / "test.db"))
             vectors = VectorStore(str(Path(tmp) / "chroma"))
             router = _ScriptedRouter()
-            return ask(store, vectors, router, "anything at all, memory is empty")
+            result = ask(store, vectors, router, "anything at all, memory is empty")
+            vectors.close()
+            return result
 
     return EvalCase(
         name="rag_empty_memory_says_not_in_memory",
