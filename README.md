@@ -1,7 +1,7 @@
 # Personal LLM
 
 [![CI](https://github.com/syzayd/personal-llm/actions/workflows/ci.yml/badge.svg)](https://github.com/syzayd/personal-llm/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-107%20passed%20offline-brightgreen)
+![Tests](https://img.shields.io/badge/tests-118%20passed%20offline-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -32,6 +32,10 @@ Full design docs live in [`docs/`](docs/): [PRD](docs/PRD.md), [Technical Design
   important-but-forgotten items without being asked - and **verify answers**
   (`ask --verify`) across every available provider, flagging disagreement instead of
   silently picking one.
+- **Detect interest trends** (`trends`) by comparing keyword frequency in your recent
+  ingestion history against the equal-length window right before it - which topics
+  you're writing about more, and which have faded. Pure frequency counting, no model
+  call, fully offline.
 - **Ingest real Gmail/Drive content** (v1.0, `ingest-external`) fetched via Claude Code's
   own already-authenticated MCP connectors - `personal_llm` holds no Google credentials
   of its own; see [ADR 0005](docs/DECISIONS/0005-external-integrations-via-mcp-bridge.md).

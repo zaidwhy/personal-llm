@@ -16,6 +16,7 @@ from personal_llm.eval.cases import builtin_cases
 from personal_llm.integrations import ExternalItem, sync_external_items
 from personal_llm.memory.consolidate import consolidate as run_consolidate
 from personal_llm.memory.ingest import ingest_file
+from personal_llm.memory.interest_trends import detect_interest_trends_in_store
 from personal_llm.memory.retrieve import semantic_search
 from personal_llm.memory.types import MemoryRecord
 from personal_llm.rag.pipeline import ask as rag_ask
@@ -169,6 +170,23 @@ def review(days: int = typer.Option(7, help="How many days back counts as 'recen
         typer.echo("\nSuggested actions:")
         for item in report.insights.suggested_actions:
             typer.echo(f"  - {item}")
+
+
+@app.command()
+def trends(
+    window_days: float = typer.Option(7.0, help="Size of the 'recent' and 'previous' comparison windows, in days."),
+    k: int = typer.Option(10, help="Number of keywords to show."),
+) -> None:
+    """Interest-trend detector: keywords said much more (or less) in the recent
+    window than the equal-length window right before it."""
+    engine = build_engine()
+    result = detect_interest_trends_in_store(engine.store, window_days=window_days, k=k)
+    if not result:
+        typer.echo("Not enough ingestion history yet to detect a trend.")
+        return
+    for trend in result:
+        arrow = "^" if trend.delta > 0 else "v" if trend.delta < 0 else "="
+        typer.echo(f"[{arrow}{abs(trend.delta)}] {trend.keyword} (recent {trend.recent_count}, previous {trend.previous_count})")
 
 
 @app.command()
