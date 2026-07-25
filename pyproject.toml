@@ -17,6 +17,9 @@ personal-llm = "personal_llm.interfaces.cli:app"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"personal_llm.prompts" = ["*.txt"]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 

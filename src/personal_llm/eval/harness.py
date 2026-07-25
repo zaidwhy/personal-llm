@@ -1,6 +1,6 @@
 """Prompt-regression eval harness (docs/ROADMAP.md v0.3 "richer router" groundwork).
 
-A system prompt (rag/pipeline.py's `_SYSTEM`, review/weekly.py's `_SYSTEM`, ...) can be
+A system prompt (prompts/rag_system.txt, prompts/review_system.txt, ...) can be
 reworded for a genuinely good reason - tighter instructions, a new constraint - and
 still silently break the *behavior* callers depend on: grounding falling back to
 "I don't have anything in memory" when it shouldn't, a review report losing a field,

@@ -1,7 +1,7 @@
 # Personal LLM
 
 [![CI](https://github.com/syzayd/personal-llm/actions/workflows/ci.yml/badge.svg)](https://github.com/syzayd/personal-llm/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-118%20passed%20offline-brightgreen)
+![Tests](https://img.shields.io/badge/tests-124%20passed%20offline-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -111,7 +111,7 @@ under 5 minutes with no API key.
 ```powershell
 & "venv\Scripts\python" -m pytest tests/ -q
 ```
-107 tests, fully mocked - no API key, network, real model, or real Tesseract binary
+124 tests, fully mocked - no API key, network, real model, or real Tesseract binary
 required. CI runs this on every push (keyless by design).
 
 ## Architecture at a glance
