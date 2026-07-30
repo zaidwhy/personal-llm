@@ -20,6 +20,7 @@ from personal_llm.memory.interest_trends import detect_interest_trends_in_store
 from personal_llm.memory.retrieve import semantic_search
 from personal_llm.memory.types import MemoryRecord
 from personal_llm.rag.pipeline import ask as rag_ask
+from personal_llm.review.self_review import generate_self_review
 from personal_llm.review.weekly import generate_review
 from personal_llm.router.providers import RouterError
 from personal_llm.tools import build_default_registry
@@ -170,6 +171,21 @@ def review(days: int = typer.Option(7, help="How many days back counts as 'recen
         typer.echo("\nSuggested actions:")
         for item in report.insights.suggested_actions:
             typer.echo(f"  - {item}")
+
+
+@app.command(name="self-review")
+def self_review(
+    days: int = typer.Option(7, help="How many days back counts as 'recent'."),
+    night_shift_log: str = typer.Option(
+        None, help="Path to NIGHT_SHIFT.md (defaults to config night_shift_log_path)."
+    ),
+) -> None:
+    """Weekly self-review: deterministic markdown summary of the audit log plus the
+    ai-ecosystem Night Shift build log - no model call, unlike `review`."""
+    settings = get_settings()
+    engine = build_engine()
+    log_path = night_shift_log if night_shift_log is not None else settings.night_shift_log_path
+    typer.echo(generate_self_review(engine.store, night_shift_log_path=log_path, days=days))
 
 
 @app.command()

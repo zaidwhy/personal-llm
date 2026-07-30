@@ -1,7 +1,7 @@
 # Personal LLM
 
 [![CI](https://github.com/syzayd/personal-llm/actions/workflows/ci.yml/badge.svg)](https://github.com/syzayd/personal-llm/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-124%20passed%20offline-brightgreen)
+![Tests](https://img.shields.io/badge/tests-143%20passed%20offline-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -36,6 +36,11 @@ Full design docs live in [`docs/`](docs/): [PRD](docs/PRD.md), [Technical Design
   ingestion history against the equal-length window right before it - which topics
   you're writing about more, and which have faded. Pure frequency counting, no model
   call, fully offline.
+- **Weekly self-review** (`self-review`) - a deterministic markdown summary of the
+  system's own recent activity: the audit log (every ingest/ask/remember/... call) plus
+  the ai-ecosystem Night Shift build log, no model call. Different from `review` above,
+  which reads memory content and calls a model for insights; this reads what the system
+  itself has been doing.
 - **Ingest real Gmail/Drive content** (v1.0, `ingest-external`) fetched via Claude Code's
   own already-authenticated MCP connectors - `personal_llm` holds no Google credentials
   of its own; see [ADR 0005](docs/DECISIONS/0005-external-integrations-via-mcp-bridge.md).
@@ -75,6 +80,9 @@ py -3.12 -m venv venv
 & "venv\Scripts\python" -m personal_llm.interfaces.cli review --days 7
 & "venv\Scripts\python" -m personal_llm.interfaces.cli ask "what is this project?" --verify
 
+# Weekly self-review of the system's own activity (audit log + Night Shift build log)
+& "venv\Scripts\python" -m personal_llm.interfaces.cli self-review --days 7
+
 # External content (Gmail/Drive fetched elsewhere, e.g. via Claude Code's MCP - see ADR 0005)
 & "venv\Scripts\python" -m personal_llm.interfaces.cli ingest-external "path\to\items.json"
 
@@ -111,7 +119,7 @@ under 5 minutes with no API key.
 ```powershell
 & "venv\Scripts\python" -m pytest tests/ -q
 ```
-124 tests, fully mocked - no API key, network, real model, or real Tesseract binary
+143 tests, fully mocked - no API key, network, real model, or real Tesseract binary
 required. CI runs this on every push (keyless by design).
 
 ## Architecture at a glance

@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     personal_llm_workspace_dir: str = "./data/workspace"
     personal_llm_voice_dir: str = "./data/voice"
     personal_llm_gateway_token_path: str = "./data/gateway_token"
+    night_shift_log_path: str = "../NIGHT_SHIFT.md"
 
     retrieval_top_k: int = 8
     retrieval_min_similarity: float = 0.25
