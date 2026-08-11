@@ -111,17 +111,6 @@ class MemoryStore:
             row = conn.execute("SELECT * FROM memories WHERE id = ?", (memory_id,)).fetchone()
         return _row_to_memory(row) if row else None
 
-    def get_memories(self, memory_ids: list[str]) -> list[MemoryRecord]:
-        if not memory_ids:
-            return []
-        placeholders = ",".join("?" * len(memory_ids))
-        with self._connect() as conn:
-            rows = conn.execute(
-                f"SELECT * FROM memories WHERE id IN ({placeholders})", memory_ids
-            ).fetchall()
-        by_id = {row["id"]: _row_to_memory(row) for row in rows}
-        return [by_id[mid] for mid in memory_ids if mid in by_id]
-
     def get_memories_by_vector_ids(self, vector_ids: list[str]) -> dict[str, MemoryRecord]:
         if not vector_ids:
             return {}
