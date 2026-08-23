@@ -8,11 +8,25 @@ import math
 
 import pytest
 
+from personal_llm import config
 from personal_llm.memory.store import MemoryStore
 from personal_llm.memory.vectors import VectorStore
 from personal_llm.router.schemas import Completion, VerifiedCompletion
 
 EMBED_DIM = 32
+
+
+@pytest.fixture(autouse=True)
+def _isolated_nexus_data_dir(tmp_path, monkeypatch):
+    """get_settings() is called unconditionally by several modules (e.g.
+    memory.retrieve.semantic_search) even in tests that build their own store/vectors
+    from tmp_path fixtures. Without this, every test run resolves NEXUS_DATA_DIR to the
+    real production data root and mkdir's into it. Point it at a per-test tmp dir and
+    drop the cached singleton so the override actually takes effect."""
+    monkeypatch.setenv("NEXUS_DATA_DIR", str(tmp_path / "nexus_data"))
+    config.reset_settings()
+    yield
+    config.reset_settings()
 
 
 def hash_embed(text: str) -> list[float]:
