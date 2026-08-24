@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .identity import normalize_canonical_key, subsumes
 from .types import Chunk, KGEdge, KGNode, MemoryKind, MemoryRecord
 
 _SCHEMA = """
@@ -41,6 +42,7 @@ CREATE TABLE IF NOT EXISTS nodes (
   id TEXT PRIMARY KEY,
   type TEXT NOT NULL,
   name TEXT NOT NULL,
+  canonical_key TEXT NOT NULL DEFAULT '',
   meta TEXT
 );
 
@@ -51,6 +53,14 @@ CREATE TABLE IF NOT EXISTS edges (
   weight REAL NOT NULL DEFAULT 1.0,
   meta TEXT,
   PRIMARY KEY (src, rel, dst)
+);
+
+CREATE TABLE IF NOT EXISTS entity_aliases (
+  alias_norm TEXT NOT NULL,
+  entity_id TEXT NOT NULL,
+  source TEXT,
+  confidence REAL NOT NULL DEFAULT 1.0,
+  PRIMARY KEY (alias_norm, entity_id)
 );
 
 CREATE TABLE IF NOT EXISTS audit (
@@ -65,6 +75,7 @@ CREATE INDEX IF NOT EXISTS idx_memories_kind ON memories(kind);
 CREATE INDEX IF NOT EXISTS idx_chunks_doc ON chunks(doc_id);
 CREATE INDEX IF NOT EXISTS idx_edges_src ON edges(src);
 CREATE INDEX IF NOT EXISTS idx_edges_dst ON edges(dst);
+CREATE INDEX IF NOT EXISTS idx_entity_aliases_entity ON entity_aliases(entity_id);
 """
 
 
@@ -78,6 +89,39 @@ class MemoryStore:
         self._db_path = db_path
         with self._connect() as conn:
             conn.executescript(_SCHEMA)
+            self._migrate_nodes_table(conn)
+
+    def _migrate_nodes_table(self, conn: sqlite3.Connection) -> None:
+        """Backfill `canonical_key` and its unique index for a nodes table created
+        before this column existed. A brand-new table already has the column (it is in
+        _SCHEMA) and 0 rows, so this is a no-op there. For a pre-existing table, any
+        rows sharing a (type, canonical_key) after backfill are collapsed onto the
+        first one (by rowid) and edges are repointed - the same consolidation
+        scripts/rebuild_entities.py performs, done defensively here so opening any old
+        DB through this class never crashes on the new unique index."""
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(nodes)").fetchall()}
+        if "canonical_key" not in columns:
+            conn.execute("ALTER TABLE nodes ADD COLUMN canonical_key TEXT NOT NULL DEFAULT ''")
+
+        rows = conn.execute("SELECT rowid, id, type, name, canonical_key FROM nodes").fetchall()
+        for row in rows:
+            if not row["canonical_key"]:
+                conn.execute(
+                    "UPDATE nodes SET canonical_key = ? WHERE rowid = ?",
+                    (normalize_canonical_key(row["name"]), row["rowid"]),
+                )
+
+        groups: dict[tuple[str, str], list[str]] = {}
+        for row in conn.execute("SELECT id, type, canonical_key FROM nodes").fetchall():
+            groups.setdefault((row["type"], row["canonical_key"]), []).append(row["id"])
+        for (_type, _key), ids in groups.items():
+            if len(ids) <= 1:
+                continue
+            keep, *drop = ids
+            for dupe_id in drop:
+                _fold_node_into(conn, keep, dupe_id)
+        _dedupe_edges(conn)
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS ux_nodes_type_canonical_key ON nodes(type, canonical_key)")
 
     @contextmanager
     def _connect(self):
@@ -177,15 +221,46 @@ class MemoryStore:
         by_id = {row["id"]: _row_to_chunk(row) for row in rows}
         return [by_id[cid] for cid in chunk_ids if cid in by_id]
 
+    def all_chunks(self) -> list[Chunk]:
+        with self._connect() as conn:
+            rows = conn.execute("SELECT * FROM chunks ORDER BY doc_id, ord").fetchall()
+        return [_row_to_chunk(r) for r in rows]
+
     # --- knowledge graph --------------------------------------------------------
 
-    def add_node(self, node: KGNode) -> str:
+    def upsert_entity(self, node: KGNode) -> str:
+        """Insert a new entity, or fold a repeat mention into the existing row for its
+        (type, canonical_key). This is the fix for the old add_node behavior, which
+        was `INSERT OR REPLACE` keyed on a random uuid id - so it never deduped and
+        every mention became a new row."""
         with self._connect() as conn:
             conn.execute(
-                "INSERT OR REPLACE INTO nodes (id, type, name, meta) VALUES (?, ?, ?, ?)",
-                (node.id, node.type, node.name, json.dumps(node.meta)),
+                """INSERT INTO nodes (id, type, name, canonical_key, meta)
+                   VALUES (?, ?, ?, ?, ?)
+                   ON CONFLICT(type, canonical_key) DO UPDATE SET
+                     name = excluded.name,
+                     meta = excluded.meta""",
+                (node.id, node.type, node.name, node.canonical_key, json.dumps(node.meta)),
+            )
+            conn.execute(
+                "INSERT OR IGNORE INTO entity_aliases (alias_norm, entity_id, source, confidence) "
+                "VALUES (?, ?, ?, ?)",
+                (node.canonical_key, node.id, "kg_extraction", 1.0),
             )
         return node.id
+
+    def add_node(self, node: KGNode) -> str:
+        """Thin compatibility shim - delegates to upsert_entity. Kept because other
+        callers may still say add_node; upsert_entity is the real implementation."""
+        return self.upsert_entity(node)
+
+    def add_entity_alias(self, alias_norm: str, entity_id: str, source: str, confidence: float = 1.0) -> None:
+        with self._connect() as conn:
+            conn.execute(
+                "INSERT OR IGNORE INTO entity_aliases (alias_norm, entity_id, source, confidence) "
+                "VALUES (?, ?, ?, ?)",
+                (alias_norm, entity_id, source, confidence),
+            )
 
     def add_edge(self, edge: KGEdge) -> None:
         with self._connect() as conn:
@@ -197,7 +272,13 @@ class MemoryStore:
     def all_nodes(self) -> list[KGNode]:
         with self._connect() as conn:
             rows = conn.execute("SELECT * FROM nodes").fetchall()
-        return [KGNode(id=r["id"], type=r["type"], name=r["name"], meta=json.loads(r["meta"] or "{}")) for r in rows]
+        return [
+            KGNode(
+                id=r["id"], type=r["type"], name=r["name"],
+                canonical_key=r["canonical_key"], meta=json.loads(r["meta"] or "{}"),
+            )
+            for r in rows
+        ]
 
     def all_edges(self) -> list[KGEdge]:
         with self._connect() as conn:
@@ -206,6 +287,51 @@ class MemoryStore:
             KGEdge(src=r["src"], rel=r["rel"], dst=r["dst"], weight=r["weight"], meta=json.loads(r["meta"] or "{}"))
             for r in rows
         ]
+
+    def clear_graph(self) -> None:
+        """Wipe nodes/edges/entity_aliases. They are derived data (re-extractable from
+        chunks), used by scripts/rebuild_entities.py to force a clean rebuild rather
+        than trying to reconcile old random-id nodes in place."""
+        with self._connect() as conn:
+            conn.execute("DELETE FROM nodes")
+            conn.execute("DELETE FROM edges")
+            conn.execute("DELETE FROM entity_aliases")
+
+    def merge_subsumed_people(self) -> int:
+        """Fold a person's short name into their full name ("Zaid" into "Zaid Ali Syed"),
+        repointing edges and keeping the short form in `entity_aliases` so a later
+        mention still resolves. Returns how many nodes were folded away.
+
+        Restricted to people on purpose. Name subsumption is a reliable coreference
+        signal for humans and an unreliable one for everything else, where a longer name
+        usually means a different thing - see identity.subsumes."""
+        folded = 0
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT id, name, canonical_key FROM nodes WHERE type = 'person'"
+            ).fetchall()
+            # Longest first, so a short form always folds into the fullest name available
+            # rather than into an intermediate one.
+            people = sorted(rows, key=lambda r: len(r["canonical_key"].split()), reverse=True)
+            absorbed: set[str] = set()
+            for keeper in people:
+                if keeper["id"] in absorbed:
+                    continue
+                for candidate in people:
+                    if candidate["id"] in absorbed or candidate["id"] == keeper["id"]:
+                        continue
+                    if not subsumes(keeper["canonical_key"], candidate["canonical_key"]):
+                        continue
+                    conn.execute(
+                        "INSERT OR IGNORE INTO entity_aliases (alias_norm, entity_id, source, confidence) "
+                        "VALUES (?, ?, ?, ?)",
+                        (candidate["canonical_key"], keeper["id"], "name_subsumption", 0.9),
+                    )
+                    _fold_node_into(conn, keeper["id"], candidate["id"])
+                    absorbed.add(candidate["id"])
+                    folded += 1
+            _dedupe_edges(conn)
+        return folded
 
     # --- audit --------------------------------------------------------------
 
@@ -274,3 +400,28 @@ def _row_to_chunk(row: sqlite3.Row) -> Chunk:
         id=row["id"], doc_id=row["doc_id"], ord=row["ord"], text=row["text"],
         vector_id=row["vector_id"], created_at=row["created_at"],
     )
+
+
+def _fold_node_into(conn: sqlite3.Connection, keep_id: str, drop_id: str) -> None:
+    """Repoint every edge off `drop_id` onto `keep_id`, redirect its aliases, and delete
+    it. Callers run _dedupe_edges afterwards, because repointing can produce an edge that
+    now points at itself.
+
+    UPDATE OR IGNORE, not plain UPDATE: when the keeper already carries the same
+    (src, rel, dst), repointing raises on the UNIQUE constraint mid-fold and aborts the
+    whole merge. Skipping those rows is right - the edge being repointed is a duplicate of
+    one the keeper already has - and the DELETE below clears whatever the skip left behind
+    still attached to drop_id."""
+    conn.execute("UPDATE OR IGNORE edges SET src = ? WHERE src = ?", (keep_id, drop_id))
+    conn.execute("UPDATE OR IGNORE edges SET dst = ? WHERE dst = ?", (keep_id, drop_id))
+    conn.execute("DELETE FROM edges WHERE src = ? OR dst = ?", (drop_id, drop_id))
+    conn.execute("UPDATE OR IGNORE entity_aliases SET entity_id = ? WHERE entity_id = ?", (keep_id, drop_id))
+    conn.execute("DELETE FROM entity_aliases WHERE entity_id = ?", (drop_id,))
+    conn.execute("DELETE FROM nodes WHERE id = ?", (drop_id,))
+
+
+def _dedupe_edges(conn: sqlite3.Connection) -> None:
+    # Folding two nodes together can leave an edge pointing at itself, which carries no
+    # information and would inflate the edge count, so drop those as well.
+    conn.execute("DELETE FROM edges WHERE src = dst")
+    conn.execute("DELETE FROM edges WHERE rowid NOT IN (SELECT MIN(rowid) FROM edges GROUP BY src, rel, dst)")

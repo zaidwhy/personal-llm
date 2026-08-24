@@ -30,7 +30,9 @@ def test_extract_and_store_creates_nodes_and_edges(store):
 
     assert count == 1
     assert {n.name for n in store.all_nodes()} == {"Zaid", "Personal LLM"}
-    assert store.all_edges()[0].rel == "builds"
+    edge = store.all_edges()[0]
+    assert edge.rel == "creates"  # normalize_relation("builds") -> "creates"
+    assert edge.meta["raw_relation"] == "builds"
 
 
 def test_related_entities_finds_one_hop_neighbor(store):
