@@ -10,6 +10,15 @@ Thresholds checked here (all from the plan, none invented at report time):
   entities <= 80, "Personal LLM" resolves to exactly 1, largest connected component
   >= 10 nodes, and more than one distinct node type exists.
 
+A note on `entities <= 80`, written down before anyone is tempted to edit the constant:
+that number was pre-registered against a 202-node baseline produced by a much smaller
+triple set, and it is a PROXY for "deduplication works" rather than a measurement of it.
+It is sensitive to how much the extractor emits, so a corpus that genuinely contains
+several hundred distinct named things fails it while being perfectly deduplicated. The
+duplication block below measures the underlying property directly and does not move with
+corpus size. The count check is deliberately left in place and left failing; replacing it
+is a plan amendment and needs Zaid's sign-off, not a quiet edit to MAX_ENTITIES.
+
 --verify-idempotent additionally re-applies the cached extraction over every chunk
 WITHOUT wiping the graph first, and asserts the node and edge counts do not move. That is
 the check the whole step exists for: today re-ingesting the same corpus doubled the
@@ -69,6 +78,44 @@ def components(node_ids: list[str], edges: list[tuple[str, str]]) -> list[int]:
     return sorted(sizes, reverse=True)
 
 
+def _edit_distance_one(a: str, b: str) -> bool:
+    """True when one single-character insert, delete, or substitution turns a into b."""
+    if abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        return sum(x != y for x, y in zip(a, b)) == 1
+    longer, shorter = (a, b) if len(a) > len(b) else (b, a)
+    for i in range(len(longer)):
+        if longer[:i] + longer[i + 1:] == shorter:
+            return True
+    return False
+
+
+def duplication(nodes: list) -> tuple[dict[str, set[str]], list[tuple[str, str]]]:
+    """Measure residual duplication directly, rather than inferring it from a headcount.
+
+    Two signals, neither of which depends on how large the corpus is:
+
+    `split_keys` - one canonical_key stored under more than one type. Type is part of the
+    identity key, so a type disagreement between two mentions fragments one real entity
+    across rows. This is the failure mode the deterministic-type decision exists to
+    prevent, and it should be exactly 0.
+
+    `near_duplicates` - canonical_key pairs one character apart, which is what a
+    normalization gap looks like from the outside ("competitor analysi" beside
+    "competitor analysis"). Not automatically a bug, since real entities can differ by a
+    character, but every one is worth a look.
+    """
+    by_key: dict[str, set[str]] = {}
+    for node in nodes:
+        by_key.setdefault(node.canonical_key, set()).add(node.type)
+    split_keys = {key: types for key, types in by_key.items() if len(types) > 1}
+
+    keys = sorted(by_key)
+    near = [(a, b) for i, a in enumerate(keys) for b in keys[i + 1:] if _edit_distance_one(a, b)]
+    return split_keys, near
+
+
 def report(store: MemoryStore) -> bool:
     nodes = store.all_nodes()
     edges = store.all_edges()
@@ -89,11 +136,19 @@ def report(store: MemoryStore) -> bool:
     print(f"node types ({len(types)}):      {dict(types)}  (gate: > 1)")
     print(f"relations ({len(relations)}):       {dict(relations)}")
 
+    split_keys, near_duplicates = duplication(nodes)
+    unique_keys = len({n.canonical_key for n in nodes})
+    print()
+    print(f"distinct canonical keys: {unique_keys} of {len(nodes)} nodes")
+    print(f"keys split across types: {len(split_keys)}  (gate: 0)  {dict(list(split_keys.items())[:5])}")
+    print(f"near-duplicate keys:     {len(near_duplicates)}  {near_duplicates[:5]}")
+
     checks = {
         f"entities <= {MAX_ENTITIES}": len(nodes) <= MAX_ENTITIES,
         "'Personal LLM' == 1 row": len(personal_llm_rows) == 1,
         f"largest component >= {MIN_LARGEST_COMPONENT}": largest >= MIN_LARGEST_COMPONENT,
         "more than one node type": len(types) > 1,
+        "no canonical key split across types": not split_keys,
     }
     print()
     for label, ok in checks.items():
