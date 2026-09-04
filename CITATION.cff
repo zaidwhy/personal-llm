@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this project, please cite it as below."
+title: "Personal LLM: A Local-First Memory and RAG Kernel"
+authors:
+  - family-names: "Syed"
+    given-names: "Zaid Ali"
+date-released: 2026-07-03
+url: "https://github.com/zaidwhy/personal-llm"
+repository-code: "https://github.com/zaidwhy/personal-llm"
+license: MIT
+abstract: >
+  A local-first, privacy-preserving memory and RAG core (SQLite + ChromaDB
+  + hybrid model router) built once and imported by downstream apps
+  instead of each rebuilding retrieval.
