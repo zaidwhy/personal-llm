@@ -4,6 +4,7 @@ title: "Personal LLM: A Local-First Memory and RAG Kernel"
 authors:
   - family-names: "Syed"
     given-names: "Zaid Ali"
+    orcid: "https://orcid.org/0009-0003-4313-1510"
 date-released: 2026-07-03
 url: "https://github.com/zaidwhy/personal-llm"
 repository-code: "https://github.com/zaidwhy/personal-llm"
