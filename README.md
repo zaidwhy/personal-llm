@@ -1,6 +1,6 @@
 # Personal LLM
 
-[![CI](https://github.com/syzayd/personal-llm/actions/workflows/ci.yml/badge.svg)](https://github.com/syzayd/personal-llm/actions/workflows/ci.yml)
+[![CI](https://github.com/zaidwhy/personal-llm/actions/workflows/ci.yml/badge.svg)](https://github.com/zaidwhy/personal-llm/actions/workflows/ci.yml)
 ![Tests](https://img.shields.io/badge/tests-143%20passed%20offline-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -10,8 +10,8 @@
 A local-first, privacy-preserving personal memory + RAG engine - built once so future
 AI projects can import it instead of rebuilding memory, retrieval, and model routing
 from scratch. It is the shared kernel behind three downstream apps:
-[second-brain](https://github.com/syzayd/second-brain),
-[github-pr-agent](https://github.com/syzayd/github-pr-agent), and DreamOS (an Electron
+[second-brain](https://github.com/zaidwhy/second-brain),
+[github-pr-agent](https://github.com/zaidwhy/github-pr-agent), and DreamOS (an Electron
 AI command bar, private until its demo video ships).
 
 Full design docs live in [`docs/`](docs/): [PRD](docs/PRD.md), [Technical Design](docs/TDD.md),
@@ -55,7 +55,7 @@ Full design docs live in [`docs/`](docs/): [PRD](docs/PRD.md), [Technical Design
 ## Quickstart (under 5 minutes)
 
 ```powershell
-git clone https://github.com/syzayd/personal-llm
+git clone https://github.com/zaidwhy/personal-llm
 cd personal-llm
 py -3.12 -m venv venv
 & "venv\Scripts\python" -m pip install -r requirements.txt
