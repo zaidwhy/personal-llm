@@ -65,6 +65,17 @@ All LLM calls are mocked in tests - no API key needed. GitHub Actions runs pytes
   `tests/test_api.py` (Night Shift PR#1; a duplicate local implementation was dropped
   during the 2026-07-10 rebase).
 
+## Deploy / public surface
+
+- No hosted instance yet. Planned (zaid-os/strategy/FLAGSHIPS.md): a Hugging Face Space demo (Gradio, OpenRouter free model, sample corpus) plus `.devcontainer/` for one-click Codespaces. Until then the public proof is the test suite (`pytest --collect-only -q | tail -1`, 168 tests, keyless CI) and the three importing apps.
+
+## Definition of done (any change here)
+
+- `pytest tests/ -q` green (quote the count; README says the number, refresh it if it changed).
+- Public API of `src/personal_llm/` unchanged unless second-brain, github-pr-agent and dreamos-command-bar were checked (they import it).
+- New retrieval/routing behaviour has an eval or a mocked test proving the contract (citations present, refusal when context is missing).
+- MASTER_LOG + handoff written; fetch-first push; `git status -sb` clean.
+
 ## Other gotchas
 
 - Never use the em dash character (U+2014) anywhere; use " - " instead.
