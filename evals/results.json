@@ -1,0 +1,357 @@
+{
+  "correctness": {
+    "total": 6,
+    "passed": 6,
+    "accuracy": 1.0,
+    "checks": [
+      {
+        "question": "How often does my sourdough starter need feeding?",
+        "expected_doc_id": "note-sourdough",
+        "cited_docs": [
+          "note-book-recommendation",
+          "note-passport",
+          "note-sourdough"
+        ],
+        "grounded_correctly": true,
+        "context_has_expected_fact": true,
+        "pass": true
+      },
+      {
+        "question": "How did I fix the skipping gears on my bicycle?",
+        "expected_doc_id": "note-bike-repair",
+        "cited_docs": [
+          "note-bike-repair",
+          "note-plant-care",
+          "note-wifi-password"
+        ],
+        "grounded_correctly": true,
+        "context_has_expected_fact": true,
+        "pass": true
+      },
+      {
+        "question": "What do I need to bring to my passport renewal appointment?",
+        "expected_doc_id": "note-passport",
+        "cited_docs": [
+          "note-passport",
+          "note-plant-care",
+          "note-wifi-password"
+        ],
+        "grounded_correctly": true,
+        "context_has_expected_fact": true,
+        "pass": true
+      },
+      {
+        "question": "How often should I water the fiddle-leaf fig?",
+        "expected_doc_id": "note-plant-care",
+        "cited_docs": [
+          "note-plant-care",
+          "note-sourdough",
+          "note-wifi-password"
+        ],
+        "grounded_correctly": true,
+        "context_has_expected_fact": true,
+        "pass": true
+      },
+      {
+        "question": "What book did my colleague recommend to me?",
+        "expected_doc_id": "note-book-recommendation",
+        "cited_docs": [
+          "note-bike-repair",
+          "note-book-recommendation",
+          "note-plant-care"
+        ],
+        "grounded_correctly": true,
+        "context_has_expected_fact": true,
+        "pass": true
+      },
+      {
+        "question": "Where is the guest wifi password stored?",
+        "expected_doc_id": "note-wifi-password",
+        "cited_docs": [
+          "note-book-recommendation",
+          "note-plant-care",
+          "note-wifi-password"
+        ],
+        "grounded_correctly": true,
+        "context_has_expected_fact": true,
+        "pass": true
+      }
+    ]
+  },
+  "retrieval": {
+    "total": 6,
+    "recall_at_1": 1.0,
+    "recall_at_3": 1.0,
+    "rows": [
+      {
+        "question": "How often does my sourdough starter need feeding?",
+        "expected_doc_id": "note-sourdough",
+        "top_k_doc_ids": [
+          "note-sourdough",
+          "note-passport",
+          "note-book-recommendation"
+        ],
+        "hit_at_1": true,
+        "hit_at_3": true
+      },
+      {
+        "question": "How did I fix the skipping gears on my bicycle?",
+        "expected_doc_id": "note-bike-repair",
+        "top_k_doc_ids": [
+          "note-bike-repair",
+          "note-plant-care",
+          "note-wifi-password"
+        ],
+        "hit_at_1": true,
+        "hit_at_3": true
+      },
+      {
+        "question": "What do I need to bring to my passport renewal appointment?",
+        "expected_doc_id": "note-passport",
+        "top_k_doc_ids": [
+          "note-passport",
+          "note-wifi-password",
+          "note-plant-care"
+        ],
+        "hit_at_1": true,
+        "hit_at_3": true
+      },
+      {
+        "question": "How often should I water the fiddle-leaf fig?",
+        "expected_doc_id": "note-plant-care",
+        "top_k_doc_ids": [
+          "note-plant-care",
+          "note-sourdough",
+          "note-wifi-password"
+        ],
+        "hit_at_1": true,
+        "hit_at_3": true
+      },
+      {
+        "question": "What book did my colleague recommend to me?",
+        "expected_doc_id": "note-book-recommendation",
+        "top_k_doc_ids": [
+          "note-book-recommendation",
+          "note-plant-care",
+          "note-bike-repair"
+        ],
+        "hit_at_1": true,
+        "hit_at_3": true
+      },
+      {
+        "question": "Where is the guest wifi password stored?",
+        "expected_doc_id": "note-wifi-password",
+        "top_k_doc_ids": [
+          "note-wifi-password",
+          "note-plant-care",
+          "note-book-recommendation"
+        ],
+        "hit_at_1": true,
+        "hit_at_3": true
+      }
+    ]
+  },
+  "refusal": {
+    "total": 9,
+    "passed": 9,
+    "accuracy": 1.0,
+    "checks": [
+      {
+        "question": "How often does my sourdough starter need feeding?",
+        "should_refuse": false,
+        "did_refuse": false,
+        "pass": true
+      },
+      {
+        "question": "How did I fix the skipping gears on my bicycle?",
+        "should_refuse": false,
+        "did_refuse": false,
+        "pass": true
+      },
+      {
+        "question": "What do I need to bring to my passport renewal appointment?",
+        "should_refuse": false,
+        "did_refuse": false,
+        "pass": true
+      },
+      {
+        "question": "How often should I water the fiddle-leaf fig?",
+        "should_refuse": false,
+        "did_refuse": false,
+        "pass": true
+      },
+      {
+        "question": "What book did my colleague recommend to me?",
+        "should_refuse": false,
+        "did_refuse": false,
+        "pass": true
+      },
+      {
+        "question": "Where is the guest wifi password stored?",
+        "should_refuse": false,
+        "did_refuse": false,
+        "pass": true
+      },
+      {
+        "question": "What is the capital of France?",
+        "should_refuse": true,
+        "did_refuse": true,
+        "pass": true
+      },
+      {
+        "question": "Who won the most recent World Cup?",
+        "should_refuse": true,
+        "did_refuse": true,
+        "pass": true
+      },
+      {
+        "question": "What color is the sky on Mars?",
+        "should_refuse": true,
+        "did_refuse": true,
+        "pass": true
+      }
+    ]
+  },
+  "hallucination": {
+    "total": 6,
+    "violations": 0,
+    "violation_details": [],
+    "rows": [
+      {
+        "question": "How often does my sourdough starter need feeding?",
+        "cited": [
+          "note-book-recommendation",
+          "note-passport",
+          "note-sourdough"
+        ],
+        "retrieved": [
+          "note-book-recommendation",
+          "note-passport",
+          "note-sourdough"
+        ]
+      },
+      {
+        "question": "How did I fix the skipping gears on my bicycle?",
+        "cited": [
+          "note-bike-repair",
+          "note-plant-care",
+          "note-wifi-password"
+        ],
+        "retrieved": [
+          "note-bike-repair",
+          "note-plant-care",
+          "note-wifi-password"
+        ]
+      },
+      {
+        "question": "What do I need to bring to my passport renewal appointment?",
+        "cited": [
+          "note-passport",
+          "note-plant-care",
+          "note-wifi-password"
+        ],
+        "retrieved": [
+          "note-passport",
+          "note-plant-care",
+          "note-wifi-password"
+        ]
+      },
+      {
+        "question": "How often should I water the fiddle-leaf fig?",
+        "cited": [
+          "note-plant-care",
+          "note-sourdough",
+          "note-wifi-password"
+        ],
+        "retrieved": [
+          "note-plant-care",
+          "note-sourdough",
+          "note-wifi-password"
+        ]
+      },
+      {
+        "question": "What book did my colleague recommend to me?",
+        "cited": [
+          "note-bike-repair",
+          "note-book-recommendation",
+          "note-plant-care"
+        ],
+        "retrieved": [
+          "note-bike-repair",
+          "note-book-recommendation",
+          "note-plant-care"
+        ]
+      },
+      {
+        "question": "Where is the guest wifi password stored?",
+        "cited": [
+          "note-book-recommendation",
+          "note-plant-care",
+          "note-wifi-password"
+        ],
+        "retrieved": [
+          "note-book-recommendation",
+          "note-plant-care",
+          "note-wifi-password"
+        ]
+      }
+    ]
+  },
+  "latency": {
+    "repeats": 20,
+    "p50_ms": 122.33,
+    "p95_ms": 172.54,
+    "avg_context_chars": 743,
+    "note": "local engine overhead only (fake router is instant) - excludes real provider latency"
+  },
+  "prompt_injection": {
+    "system_prompt_untouched": true,
+    "injected_content_isolated_to_user_message": true,
+    "isolation_rate": 1.0
+  },
+  "regression": {
+    "checks": {
+      "retrieval.recall_at_1": {
+        "value": 1.0,
+        "threshold": [
+          "gte",
+          0.8
+        ],
+        "pass": true
+      },
+      "retrieval.recall_at_3": {
+        "value": 1.0,
+        "threshold": [
+          "gte",
+          1.0
+        ],
+        "pass": true
+      },
+      "refusal.accuracy": {
+        "value": 1.0,
+        "threshold": [
+          "gte",
+          1.0
+        ],
+        "pass": true
+      },
+      "hallucination.violations": {
+        "value": 0,
+        "threshold": [
+          "eq",
+          0
+        ],
+        "pass": true
+      },
+      "prompt_injection.isolation_rate": {
+        "value": 1.0,
+        "threshold": [
+          "gte",
+          1.0
+        ],
+        "pass": true
+      }
+    },
+    "pass": true
+  }
+}

@@ -1,7 +1,7 @@
 # Personal LLM
 
 [![CI](https://github.com/zaidwhy/personal-llm/actions/workflows/ci.yml/badge.svg)](https://github.com/zaidwhy/personal-llm/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-143%20passed%20offline-brightgreen)
+![Tests](https://img.shields.io/badge/tests-168%20passed%20offline-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -119,8 +119,34 @@ under 5 minutes with no API key.
 ```powershell
 & "venv\Scripts\python" -m pytest tests/ -q
 ```
-143 tests, fully mocked - no API key, network, real model, or real Tesseract binary
+168 tests, fully mocked - no API key, network, real model, or real Tesseract binary
 required. CI runs this on every push (keyless by design).
+
+## Evals
+
+Tests check that the code doesn't crash; evals check that the RAG pipeline's behaviour
+is actually correct. `evals/run_evals.py` runs seven offline, deterministic suites
+against a fixed fixture corpus - no network, no API key, same result every run:
+
+```powershell
+& "venv\Scripts\python" evals/run_evals.py
+```
+
+| Suite | What it checks | Current result |
+|---|---|---|
+| Correctness | `ask()` grounds on the right document and the context contains the expected fact | 6/6 (100%) |
+| Retrieval | recall@1 / recall@3 over the fixture QA set | 100% / 100% |
+| Refusal | unanswerable questions refuse, answerable ones don't | 9/9 (100%) |
+| Hallucination | every cited source was actually retrieved, never invented | 0 violations |
+| Latency | local engine overhead per `ask()` call (excludes real provider latency) | informational |
+| Prompt injection | retrieved (untrusted) text never reaches the system-role message | PASS |
+| Regression | the five suites above against fixed thresholds; CI fails the build if any regress | PASS |
+
+Full explanation of the methodology (including why embeddings use a small offline
+TF-IDF stand-in rather than the crude hash used in unit tests, and why "cost" isn't
+faked as a dollar figure without a real provider call) is in
+[`evals/run_evals.py`](evals/run_evals.py)'s module docstring and the generated
+[`evals/SCORECARD.md`](evals/SCORECARD.md).
 
 ## Architecture at a glance
 

@@ -7,3 +7,4 @@ data/
 *.egg-info/
 handoffs/
 graphify-out/
+evals/__pycache__/

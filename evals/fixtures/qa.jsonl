@@ -1,0 +1,9 @@
+{"question": "How often does my sourdough starter need feeding?", "expected_doc_id": "note-sourdough", "expected_context_substring": "twelve hours"}
+{"question": "How did I fix the skipping gears on my bicycle?", "expected_doc_id": "note-bike-repair", "expected_context_substring": "barrel tensioner"}
+{"question": "What do I need to bring to my passport renewal appointment?", "expected_doc_id": "note-passport", "expected_context_substring": "Form 2C"}
+{"question": "How often should I water the fiddle-leaf fig?", "expected_doc_id": "note-plant-care", "expected_context_substring": "ten days"}
+{"question": "What book did my colleague recommend to me?", "expected_doc_id": "note-book-recommendation", "expected_context_substring": "Klara and the Sun"}
+{"question": "Where is the guest wifi password stored?", "expected_doc_id": "note-wifi-password", "expected_context_substring": "admin panel"}
+{"question": "What is the capital of France?", "expected_doc_id": null, "expected_context_substring": null}
+{"question": "Who won the most recent World Cup?", "expected_doc_id": null, "expected_context_substring": null}
+{"question": "What color is the sky on Mars?", "expected_doc_id": null, "expected_context_substring": null}
