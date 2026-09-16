@@ -106,3 +106,23 @@ Append-only. Newest entries at the bottom. Read just the tail for recent context
   cases currently all passing (today's regression baseline), and the CLI command's
   exit-code behavior. Full suite 107/107 green offline (chromadb + sentence-transformers
   installed for this session; no API key or network used).
+
+## 2026-09-16/17 - HF Space deployed live, 13-section system-design doc
+
+- HF Space (`space/`): three real deploy bugs found and fixed in sequence via the actual
+  build/runtime logs, not guessed - (1) `sdk_version: 5.0.0` forced a `gradio-client`
+  whose `websockets` pin can never coexist with `google-genai`'s floor, bumped to
+  `6.27.0`; (2) the Space repo ships only `space/`'s contents (no sibling `../src`), so
+  `app.py`'s `sys.path` hack found nothing - installed the kernel as a real package from
+  GitHub in `requirements.txt` instead; (3) this account's free Gradio compute tier is
+  ZeroGPU, not CPU basic (CPU basic needs a paid subscription here) - recreated the Space
+  on `zero-a10g`, pinned the embedder to CPU (`CUDA_VISIBLE_DEVICES=""`), and added a
+  no-op `@spaces.GPU` wrapper on `retrieve` to satisfy the platform's startup check.
+  Live at `zaidwhys-personal-llm-demo.hf.space`, verified via its `/config` endpoint
+  serving the real app, not just a 200. `space/DEPLOYMENT.md` documents the ZeroGPU
+  gotcha for next time.
+- `docs/SYSTEM-DESIGN.md`: 13-section system-design case study (Problem through Future),
+  matching the shape used for CivilizationOS and recall. Kept the existing diagram-focused
+  `docs/ARCHITECTURE.md` separate rather than overwriting it.
+- README and `CLAUDE.md` updated with the live demo URL; the "no hosted instance yet"
+  line in `CLAUDE.md` was stale.
