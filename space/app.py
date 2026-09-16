@@ -19,18 +19,28 @@ from career/PROFILE-FACTS.yaml, not filler - the demo is also an accurate summar
 
 from __future__ import annotations
 
-# HF's Docker builder force-installs the `spaces` package into every Gradio Space
-# (its GPU-scheduling helper), even CPU-only ones like this one. It self-checks that
-# nothing has touched CUDA before it's imported, and raises if that check fails - so
-# it must be imported first, before anything that (transitively) imports torch. This
-# Space uses no GPU / @spaces.GPU feature; the import alone satisfies the check.
-# Only present inside an actual HF Space container (not in requirements.txt, not
-# installed locally), so it's optional here to keep `python app.py` / pytest working
-# unchanged on a machine that has never heard of it.
+# This account's free Space compute tier is ZeroGPU (shared A10G), not CPU basic -
+# CPU basic on Gradio Spaces requires a paid PRO subscription here. ZeroGPU requires:
+#   1. `spaces` imported before anything that (transitively) imports torch - it self-
+#      checks that nothing has touched CUDA before it loads, and raises if that check
+#      fails. Only present inside an actual HF Space container (never in
+#      requirements.txt, never installed locally), so it's an optional import to keep
+#      `python app.py` / pytest working unchanged off-Space.
+#   2. At least one `@spaces.GPU`-decorated function, or the platform refuses to
+#      start the Space at all ("No @spaces.GPU function detected during startup").
+# This demo's embeddings are cheap enough not to need real GPU acceleration, so CUDA
+# is hidden from the process entirely (forces sentence-transformers onto CPU, which
+# also sidesteps ZeroGPU's requirement that CUDA only ever be touched inside a
+# decorated call) and `retrieve` below carries a no-op `@spaces.GPU` purely to
+# satisfy the platform's startup check.
+import os
+
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+
 try:
-    import spaces  # noqa: F401
+    import spaces
 except ImportError:
-    pass
+    spaces = None
 
 import tempfile
 from pathlib import Path
@@ -58,7 +68,7 @@ for doc in CORPUS:
     ingest_text(_store, _vectors, _ingest_router, text=doc["text"], doc_id=doc["doc_id"], source="space-demo", extract_kg=False)
 
 
-def retrieve(question: str) -> str:
+def _retrieve(question: str) -> str:
     if not question.strip():
         return "Type a question above - try \"What did the TCMF benchmark find?\" or \"How many tests does personal-llm have?\""
     results = semantic_search(_store, _vectors, _ingest_router, question, k=3)
@@ -68,6 +78,11 @@ def retrieve(question: str) -> str:
     for i, r in enumerate(results, 1):
         lines.append(f"**{i}. {r.doc_id}** (similarity {r.similarity:.2f})\n\n{r.text}")
     return "\n\n---\n\n".join(lines)
+
+
+# Wrapping rather than decorating `_retrieve` directly keeps it callable/testable
+# without `spaces` installed (test_app.py runs off-Space, where `spaces` is None).
+retrieve = spaces.GPU(_retrieve) if spaces is not None else _retrieve
 
 
 def answer(question: str, gemini_key: str) -> str:
