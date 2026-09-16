@@ -7,6 +7,9 @@
 
 **Your Second Brain. Your Digital Twin. Your Personal AI.**
 
+**Live demo:** [zaidwhys-personal-llm-demo.hf.space](https://zaidwhys-personal-llm-demo.hf.space)
+(Hugging Face Space, Retrieve tab needs no key; Ask needs your own free Gemini key).
+
 A local-first, privacy-preserving personal memory + RAG engine - built once so future
 AI projects can import it instead of rebuilding memory, retrieval, and model routing
 from scratch. It is the shared kernel behind three downstream apps:
