@@ -122,6 +122,13 @@ under 5 minutes with no API key.
 168 tests, fully mocked - no API key, network, real model, or real Tesseract binary
 required. CI runs this on every push (keyless by design).
 
+## Live demo
+
+A Hugging Face Space ([`space/`](space/)) runs this exact kernel against a small real
+corpus about the author's own projects - retrieval needs no key, grounded answers need
+your own free Gemini key. Deploy steps in [`space/DEPLOYMENT.md`](space/DEPLOYMENT.md);
+Space URL added here once deployed.
+
 ## Evals
 
 Tests check that the code doesn't crash; evals check that the RAG pipeline's behaviour

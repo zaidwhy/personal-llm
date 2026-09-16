@@ -36,24 +36,34 @@ def _messages_to_gemini(messages: list[Message]) -> tuple[str, str]:
 class GeminiProvider:
     name = "gemini"
 
-    def __init__(self) -> None:
+    def __init__(self, api_key: str | None = None) -> None:
+        """`api_key`, when given, overrides GEMINI_API_KEY for this instance only - the
+        rest of the app never touches the process environment. Exists for callers that
+        serve multiple users from one process (e.g. the public eval/demo space, where
+        each visitor supplies their own free key) and must not let one visitor's key
+        leak to another's request via a shared global."""
         self._settings = get_settings()
+        self._api_key_override = api_key
         self._client = None
+
+    @property
+    def _api_key(self) -> str:
+        return self._api_key_override or self._settings.gemini_api_key
 
     def _get_client(self):
         if self._client is None:
             from google import genai
 
-            if not self._settings.gemini_api_key:
+            if not self._api_key:
                 raise RouterError(
                     "No GEMINI_API_KEY found. Get a free key at https://aistudio.google.com/apikey "
                     "and add it to .env as GEMINI_API_KEY=your-key-here."
                 )
-            self._client = genai.Client(api_key=self._settings.gemini_api_key)
+            self._client = genai.Client(api_key=self._api_key)
         return self._client
 
     def is_available(self) -> bool:
-        return bool(self._settings.gemini_api_key)
+        return bool(self._api_key)
 
     def complete(self, messages: list[Message], schema: type[BaseModel] | None = None) -> Completion:
         from google.genai import errors as genai_errors
