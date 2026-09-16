@@ -21,3 +21,15 @@ jobs:
           pip install -e .
       - name: Run tests
         run: pytest tests/ -q
+      - name: Run eval harness tests
+        run: pytest evals/ -q
+      - name: Run the eval suite (regression gate)
+        run: python evals/run_evals.py
+      - name: Upload eval scorecard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-scorecard
+          path: |
+            evals/SCORECARD.md
+            evals/results.json
