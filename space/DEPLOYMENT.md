@@ -39,6 +39,19 @@ git subtree pull --prefix=space space main -m "Merge Space-side changes"
 git subtree push --prefix=space space main
 ```
 
+## Gotcha: sdk_version and websockets
+
+`README.md`'s `sdk_version` controls which `gradio` (and therefore `gradio-client`)
+version HF's Docker builder force-installs *before* it even looks at `requirements.txt`.
+`gradio-client` pins a `websockets` range, and `google-genai` needs `websockets>=13.0` at
+every version back to 1.0.0 (checked). Old gradio releases (`gradio-client` <1.13.2, i.e.
+`sdk_version` below roughly 5.45) cap `websockets<13.0` - a hard, unresolvable conflict
+with google-genai, and the build fails with `ResolutionImpossible`. `sdk_version: 6.27.0`
+(what this Space uses, and what the local test below runs against) resolves to
+`gradio-client==2.7.0`, which has no websockets constraint at all. If HF Spaces' default
+`sdk_version` ever changes again, re-check `google-genai`'s and the new `gradio-client`'s
+`websockets` ranges before assuming the pin is safe.
+
 ## Local test before pushing
 
 ```powershell
