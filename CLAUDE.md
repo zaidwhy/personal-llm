@@ -67,7 +67,7 @@ All LLM calls are mocked in tests - no API key needed. GitHub Actions runs pytes
 
 ## Deploy / public surface
 
-- No hosted instance yet. Planned (zaid-os/strategy/FLAGSHIPS.md): a Hugging Face Space demo (Gradio, OpenRouter free model, sample corpus) plus `.devcontainer/` for one-click Codespaces. Until then the public proof is the test suite (`pytest --collect-only -q | tail -1`, 168 tests, keyless CI) and the three importing apps.
+- Live: `zaidwhys-personal-llm-demo.hf.space` (Gradio, HF Spaces, ZeroGPU hardware - CPU basic requires a paid subscription on this account). Retrieve needs no key; Ask uses the visitor's own free Gemini key, held only for that one request. See `space/DEPLOYMENT.md` for the ZeroGPU/CPU-basic gotcha and the three real deploy bugs already found and fixed (websockets dependency conflict, missing-package sys.path, CUDA/hardware mismatch). Public proof beyond the demo: the test suite (`pytest --collect-only -q | tail -1`, 168 tests, keyless CI), the eval suite (`evals/SCORECARD.md`), and the three importing apps.
 
 ## Definition of done (any change here)
 
