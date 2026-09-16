@@ -10,7 +10,9 @@ this repository.
 1. Create a free account at [huggingface.co](https://huggingface.co) if you don't have
    one.
 2. **New Space** -> name it (e.g. `personal-llm-demo`) -> SDK: **Gradio** -> Hardware:
-   **CPU basic** (free) -> Visibility: **Public**.
+   **ZeroGPU** -> Visibility: **Public**. (CPU basic on Gradio/Docker Spaces requires a
+   paid PRO subscription on non-PRO accounts; ZeroGPU - a shared, rationed A10G - is the
+   actual free tier here. See the gotcha below.)
 3. Note the Space's git URL, e.g. `https://huggingface.co/spaces/<username>/personal-llm-demo`.
 4. From this repo:
    ```powershell
@@ -51,6 +53,26 @@ with google-genai, and the build fails with `ResolutionImpossible`. `sdk_version
 `gradio-client==2.7.0`, which has no websockets constraint at all. If HF Spaces' default
 `sdk_version` ever changes again, re-check `google-genai`'s and the new `gradio-client`'s
 `websockets` ranges before assuming the pin is safe.
+
+## Gotcha: ZeroGPU, not CPU basic
+
+Non-PRO accounts cannot host a Gradio/Docker Space on CPU basic - creating or
+downgrading to it returns HTTP 402. The free compute tier here is **ZeroGPU**
+(shared A10G, allocated per call), which has two requirements `app.py` already
+meets: `spaces` must be imported before anything that (transitively) imports
+torch (it self-checks CUDA hasn't been touched yet and raises if it has), and at
+least one function must carry `@spaces.GPU` or the platform refuses to start the
+Space at all ("No @spaces.GPU function detected during startup" - shown as a
+RUNTIME_ERROR in `hf repos create`'s hardware metadata, not just a log line).
+This demo's embeddings don't need real GPU acceleration, so `CUDA_VISIBLE_DEVICES`
+is forced empty (keeps sentence-transformers on CPU, sidestepping ZeroGPU's rule
+that CUDA only ever runs inside a decorated call) and `retrieve` carries a no-op
+`@spaces.GPU` wrapper purely to satisfy the startup check. If a future change
+needs real GPU acceleration, drop the `CUDA_VISIBLE_DEVICES` override and move any
+CUDA-touching work inside a `@spaces.GPU`-decorated function.
+
+Recreating the Space from scratch: `hf repos create <user>/<space> --type space
+--sdk gradio --flavor zero-a10g --public`.
 
 ## Local test before pushing
 
