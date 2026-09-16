@@ -19,11 +19,21 @@ from career/PROFILE-FACTS.yaml, not filler - the demo is also an accurate summar
 
 from __future__ import annotations
 
-import sys
+# HF's Docker builder force-installs the `spaces` package into every Gradio Space
+# (its GPU-scheduling helper), even CPU-only ones like this one. It self-checks that
+# nothing has touched CUDA before it's imported, and raises if that check fails - so
+# it must be imported first, before anything that (transitively) imports torch. This
+# Space uses no GPU / @spaces.GPU feature; the import alone satisfies the check.
+# Only present inside an actual HF Space container (not in requirements.txt, not
+# installed locally), so it's optional here to keep `python app.py` / pytest working
+# unchanged on a machine that has never heard of it.
+try:
+    import spaces  # noqa: F401
+except ImportError:
+    pass
+
 import tempfile
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 import gradio as gr
 

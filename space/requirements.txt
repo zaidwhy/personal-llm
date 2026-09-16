@@ -1,6 +1,7 @@
-# Hugging Face Space dependencies. Mirrors the kernel's own ../requirements.txt plus
-# gradio; dev-only deps (pytest, etc.) are deliberately left out - the Space never runs
-# the test or eval suites, only the app.
+# Hugging Face Space dependencies. The Space repo ships only this folder's contents (see
+# DEPLOYMENT.md) - it has no sibling ../src the way the monorepo does, so the kernel
+# itself must be installed as a real package, from GitHub, not reached via sys.path.
+personal_llm @ git+https://github.com/zaidwhy/personal-llm.git
 gradio>=5.0,<7.0
 google-genai>=2.8
 python-dotenv>=1.0
