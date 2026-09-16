@@ -1,0 +1,10 @@
+# Hugging Face Space dependencies. Mirrors the kernel's own ../requirements.txt plus
+# gradio; dev-only deps (pytest, etc.) are deliberately left out - the Space never runs
+# the test or eval suites, only the app.
+gradio>=5.0,<7.0
+google-genai>=2.8
+python-dotenv>=1.0
+sentence-transformers>=3.0
+chromadb>=0.5
+pydantic>=2.7
+pydantic-settings>=2.4
