@@ -14,8 +14,8 @@ A local-first, privacy-preserving personal memory + RAG engine - built once so f
 AI projects can import it instead of rebuilding memory, retrieval, and model routing
 from scratch. It is the shared kernel behind three downstream apps:
 [second-brain](https://github.com/zaidwhy/second-brain),
-[github-pr-agent](https://github.com/zaidwhy/github-pr-agent), and DreamOS (an Electron
-AI command bar, private until its demo video ships).
+[github-pr-agent](https://github.com/zaidwhy/github-pr-agent), and dreamos-command-bar (an
+Electron AI command bar, now archived and private).
 
 Full design docs live in [`docs/`](docs/): [PRD](docs/PRD.md), [Technical Design](docs/TDD.md),
 [Architecture Blueprint](docs/ARCHITECTURE.md), [Roadmap](docs/ROADMAP.md), [Competitor analysis](docs/COMPETITORS.md).
@@ -129,8 +129,9 @@ required. CI runs this on every push (keyless by design).
 
 A Hugging Face Space ([`space/`](space/)) runs this exact kernel against a small real
 corpus about the author's own projects - retrieval needs no key, grounded answers need
-your own free Gemini key. Deploy steps in [`space/DEPLOYMENT.md`](space/DEPLOYMENT.md);
-Space URL added here once deployed.
+your own free Gemini key. Live at
+[zaidwhys-personal-llm-demo.hf.space](https://zaidwhys-personal-llm-demo.hf.space); deploy
+steps and the ZeroGPU gotcha are in [`space/DEPLOYMENT.md`](space/DEPLOYMENT.md).
 
 ## Evals
 
