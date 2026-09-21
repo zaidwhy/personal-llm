@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     # absolute if set at all - see _require_absolute below.
     nexus_data_dir: str | None = None
 
-    night_shift_log_path: str = "../NIGHT_SHIFT.md"
+    night_shift_log_path: str = "../records/NIGHT_SHIFT.md"
 
     retrieval_top_k: int = 8
     retrieval_min_similarity: float = 0.25
