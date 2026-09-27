@@ -113,7 +113,11 @@ in-process and need no token.
 ## Demo
 
 <!-- TODO(zaid): record a real 30-second GIF - ingest a note, ask a question, show the
-cited answer + the honest refusal on a question memory can't answer. Never fabricate. -->
+cited answer + the honest refusal on a question memory can't answer. Never fabricate.
+2026-09-27 attempt (zaid-os/scripts/term_gif.py, local llama3.2 3B, recall's README as the note):
+retrieval and citations were right and the refusal was clean, but 2 of 4 answers added a wrong
+paraphrase (e.g. inverting the 1.4 confidence gate), so it was not published. Record with a
+stronger model (a larger Ollama model or the Gemini tier). -->
 Demo GIF coming soon. Until then, the Quickstart above reproduces the full flow in
 under 5 minutes with no API key.
 
