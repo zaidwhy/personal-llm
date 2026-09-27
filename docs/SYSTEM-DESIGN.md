@@ -20,7 +20,7 @@ when nothing relevant is in memory rather than guessing.
 - Serve three different downstream apps (second-brain, github-pr-agent,
   dreamos-command-bar) through one stable public API, so a behavior change in the kernel
   cannot silently break a caller.
-- Run fully offline and keylessly in CI: 188 tests here, 356 across the kernel plus the
+- Run fully offline and keylessly in CI: 188 tests here, 363 across the kernel plus the
   three apps that import it, none needing a live model or a key.
 - Be measurable, not just demoed: an eval suite that proves retrieval quality, refusal
   correctness, and freedom from hallucination and prompt injection, not only that the
