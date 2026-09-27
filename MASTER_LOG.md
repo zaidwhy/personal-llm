@@ -126,3 +126,9 @@ Append-only. Newest entries at the bottom. Read just the tail for recent context
   `docs/ARCHITECTURE.md` separate rather than overwriting it.
 - README and `CLAUDE.md` updated with the live demo URL; the "no hosted instance yet"
   line in `CLAUDE.md` was stale.
+
+## 2026-09-27 - One-diagram README hero, test counts refreshed
+
+- `docs/answer-or-refuse.svg`: hand-authored hero replacing the "Your Second Brain..." tagline. Shows rank (0.6 similarity + 0.2 importance + 0.2 recency), the 0.25 top-hit gate, Ollama-then-Gemini routing and the refusal path; every number read from `retrieve.py`, `config.py`, `router.py`.
+- Test count 168 -> 188 in README badge, README Tests section, `docs/SYSTEM-DESIGN.md` (fleet 334 -> 354) and `CLAUDE.md`. Verified: `pytest -q` 188 passed.
+- GitHub description rewritten (approved by Zaid).
