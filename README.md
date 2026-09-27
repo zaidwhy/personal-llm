@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-**Your Second Brain. Your Digital Twin. Your Personal AI.**
+<img src="docs/answer-or-refuse.svg" alt="personal-llm in one picture: notes are chunked, embedded locally and stored in SQLite and ChromaDB. A question is ranked by 0.6 similarity plus 0.2 importance plus 0.2 recency. If the top-ranked hit has similarity below 0.25 the engine answers that it has nothing in memory; otherwise the router tries local Ollama, then Gemini, and returns an answer with cited sources. Three apps import this kernel." width="100%">
 
 **Live demo:** [zaidwhys-personal-llm-demo.hf.space](https://zaidwhys-personal-llm-demo.hf.space)
 (Hugging Face Space, Retrieve tab needs no key; Ask needs your own free Gemini key).
