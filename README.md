@@ -1,9 +1,9 @@
-<img src=".github/plate.svg" alt="Personal LLM: One memory kernel, sunk once and imported by three apps. 188 offline tests; answers with citations or refuses; keyless CI. Core strip: 56 commits over 13 weeks, Jul 2026 to Sep 2026." width="100%">
+<img src=".github/plate.svg" alt="Personal LLM: One memory kernel, sunk once and imported by three apps. 181 offline tests; answers with citations or refuses; keyless CI. Core strip: 56 commits over 13 weeks, Jul 2026 to Sep 2026." width="100%">
 
 # Personal LLM
 
 [![CI](https://github.com/zaidwhy/personal-llm/actions/workflows/ci.yml/badge.svg)](https://github.com/zaidwhy/personal-llm/actions/workflows/ci.yml)
-![Tests](https://img.shields.io/badge/tests-188%20passed%20offline-brightgreen)
+![Tests](https://img.shields.io/badge/tests-181%20passed%20offline-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -126,10 +126,11 @@ under 5 minutes with no API key.
 ## Tests
 
 ```powershell
-& "venv\Scripts\python" -m pytest tests/ -q
+& "venv\Scripts\python" -m pytest tests/ evals/ -q
 ```
-188 tests, fully mocked - no API key, network, real model, or real Tesseract binary
-required. CI runs this on every push (keyless by design).
+181 tests (173 in `tests/`, 8 in `evals/`), fully mocked - no API key, network, real model,
+or real Tesseract binary required. `space/test_app.py` holds 7 more for the Space demo; they
+download real model weights, so they run by hand, not in CI. CI runs this on every push (keyless by design).
 
 ## Live demo
 
