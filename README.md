@@ -1,4 +1,7 @@
-<img src=".github/plate.svg" alt="Personal LLM: One memory kernel, sunk once and imported by three apps. 181 offline tests; answers with citations or refuses; keyless CI. Core strip: 56 commits over 13 weeks, Jul 2026 to Sep 2026." width="100%">
+<picture>
+<source media="(max-width: 600px)" srcset=".github/plate-narrow.svg">
+<img src=".github/plate.svg" alt="Personal LLM: One memory kernel, sunk once and imported by three apps. 181 offline tests; answers with citations or refuses; keyless CI. Core strip: 60 commits over 18 weeks, Jul 2026 to Oct 2026." width="100%">
+</picture>
 
 # Personal LLM
 
