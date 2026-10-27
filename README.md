@@ -1,3 +1,5 @@
+<img src=".github/plate.svg" alt="Personal LLM: One memory kernel, sunk once and imported by three apps. 188 offline tests; answers with citations or refuses; keyless CI. Core strip: 56 commits over 13 weeks, Jul 2026 to Sep 2026." width="100%">
+
 # Personal LLM
 
 [![CI](https://github.com/zaidwhy/personal-llm/actions/workflows/ci.yml/badge.svg)](https://github.com/zaidwhy/personal-llm/actions/workflows/ci.yml)
@@ -206,3 +208,7 @@ offline and keyless.
 ## License
 
 [MIT](LICENSE).
+
+---
+
+<sub>One plate from the survey at [github.com/zaidwhy](https://github.com/zaidwhy). The strip on the plate above is this repository's own commit history, one band per week.</sub>
