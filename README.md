@@ -5,6 +5,8 @@
 
 # Personal LLM
 
+[![A card pinned with a brass tack and red thread to the corner of an open wooden drawer, a small notebook on the desk behind. AI-generated illustration.](docs/media/hero.webp)](docs/media/hero-loop.mp4)
+
 [![CI](https://github.com/zaidwhy/personal-llm/actions/workflows/ci.yml/badge.svg)](https://github.com/zaidwhy/personal-llm/actions/workflows/ci.yml)
 ![Tests](https://img.shields.io/badge/tests-181%20passed%20offline-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.12-blue)
